@@ -1,0 +1,3 @@
+## Travel Planner
+Application pour préparer un voyage dans un pays, une région ou une ville ...   
+... qui permet d'identifier les sites à "ne pas mnquer"

@@ -5,7 +5,7 @@ LABEL description="Travel Planner – POI Finder avec Claude & Streamlit"
 
 WORKDIR /app
 
-COPY python_dependencies.txt .
+COPY docker/python_dependencies.txt .
 RUN pip install --no-cache-dir -r python_dependencies.txt
 
 COPY src/app.py .

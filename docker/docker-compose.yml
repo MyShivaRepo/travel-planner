@@ -1,7 +1,7 @@
 services:
   travel-planner:
     build:
-      context: .
+      context: ..
       dockerfile: docker/Dockerfile
     container_name: travel-planner
     ports:

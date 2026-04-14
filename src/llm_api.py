@@ -193,6 +193,31 @@ def generate_pois(destination_nom, destination_type, nb_pois, provider=None, api
     return data.get("pois", [])
 
 
+def generate_additional_poi(destination_nom, existing_pois, provider=None, api_key=None, model=None):
+    existing_names = "\n".join(f"- {p['nom']}" for p in existing_pois)
+    user_msg = (
+        f"Pour la destination « {destination_nom} », voici les sites déjà retenus :\n"
+        f"{existing_names}\n\n"
+        "Propose UN SEUL nouveau site touristique incontournable qui n'est PAS dans cette liste. "
+        "Fournis : rang, nom, type (Nature, Architecture, Histoire, Musée, Gastronomie, etc.), "
+        "description courte, latitude et longitude précises (WGS84)."
+    )
+    system = (
+        "Tu es un expert en voyages et tourisme. "
+        "Réponds UNIQUEMENT en JSON valide, sans texte avant ou après. "
+        'Le JSON doit avoir la structure : {"rang": int, "nom": str, '
+        '"type": str, "description": str, "latitude": float, "longitude": float}'
+    )
+    raw = _llm_call(provider, api_key, model, system, user_msg)
+    data = _extract_json(raw)
+    # Si le LLM retourne un objet directement (pas dans une liste)
+    if "nom" in data:
+        return data
+    # Si le LLM retourne {"pois": [...]}
+    pois = data.get("pois", [])
+    return pois[0] if pois else None
+
+
 def generate_travel(destination_nom, pois, provider=None, api_key=None, model=None):
     pois_desc = "\n".join(
         f"- {p['nom']} ({p['type']}, lat:{p['latitude']}, lon:{p['longitude']})"

@@ -29,8 +29,8 @@ Le concept de `Voyage` représente la planification complète pour une `Destinat
 Il est caractérisé par :   
 - une liste de `Segments`  
 - chaque `Segment` à un 1 point de départ et 1 point d'arrivée   
-- Ces points peuvent être soit des `hotels`, soit des `POIs`   
-- Chaque `Segment` a un `mode de transport` : pied, vélo, voiture (personelle, location, taxi), bus, metro , train, bateau, avion.  
+- ces points peuvent être soit des `hotels`, soit des `POIs`   
+- chaque `Segment` a un `mode de transport` affecté : pied, vélo, voiture (personelle, location, taxi), bus, metro , train, bateau, avion.  
 
 
 ## Jour

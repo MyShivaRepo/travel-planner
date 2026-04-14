@@ -4,7 +4,7 @@
 
 Le 1er concept clef est le concept de `Destination`.
 Il est caractérisé par :
-- un `nom` : le nom de la destination (ex: "France", "Toscane", "Paris")
+- un `nom` : le nom de la destination (ex: "Italie", "Toscane", "Rome")
 - un `type` : Pays, Région, Ville
 
 Une `Destination` contient plusieurs `POI` (relation 1-N).   

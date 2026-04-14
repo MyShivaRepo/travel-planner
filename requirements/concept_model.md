@@ -35,9 +35,10 @@ Il est caractérisé par :
 
 ## Jour
 
-Le concept de `Jour` est utilisé dans la planification du voyage.       
+Le concept de `Jour` est utilisé dans la planification du voyage.   
+Une `Jour` contient un nombre fini de `Segment`, d'un `hotel` de départ à un `hotel` d'arrivée.   
 Il est caractérisé par :   
 - un `numéro` : le numéro du jour dans le voyage (Jour 1, Jour 2, ...).    
 - une liste de `POIs` à visiter ce jour-là.   
-- un `hôtel` : nom, adresse et coordonnées GPS (latitude, longitude) de l'hôtel recommandé pour la nuit.    
-- un `restaurant` : nom, adresse et coordonnées GPS (latitude, longitude) du restaurant recommandé pour le dîner.    
+- un `hôtel` : nom, adresse et coordonnées GPS (latitude, longitude) de l'hôtel recommandé pour la nuit.      
+- un `restaurant` : nom, adresse et coordonnées GPS (latitude, longitude) du restaurant recommandé pour le dîner.     

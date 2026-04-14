@@ -6,6 +6,6 @@ Il est caractérisé par un `type`: Pays, Région, Ville
 Le 2nd concept clef est le concept de `POI` (Point Of Interest).   
 Il est caractérisé par :   
 - un `type`: Nature, Architecture, Histoire, ...   
-- une description  
-- une latitude   
-- une longitute   
+- une `description`  
+- une `latitude`   
+- une `longitude`   

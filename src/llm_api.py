@@ -29,7 +29,9 @@ SYSTEM_TRAVEL = (
     "Réponds UNIQUEMENT en JSON valide, sans texte avant ou après. "
     'Le JSON doit avoir la structure : {"jours": [{"numero": int, '
     '"poi_noms": [str], "hotel_nom": str, "hotel_adresse": str, '
-    '"restaurant_nom": str, "restaurant_adresse": str}, ...]}'
+    '"hotel_latitude": float, "hotel_longitude": float, '
+    '"restaurant_nom": str, "restaurant_adresse": str, '
+    '"restaurant_latitude": float, "restaurant_longitude": float}, ...]}'
 )
 
 
@@ -174,9 +176,30 @@ def test_api_key(provider, api_key, model=None):
         return False, f"Erreur : {e}"
 
 
-def _llm_call(provider, api_key, model, system, user_msg):
+def _llm_call(provider, api_key, model, system, user_msg,
+              fallback_provider=None, fallback_api_key=None, fallback_model=None):
     provider, key, mdl = _resolve(provider, api_key, model)
-    return _CALL[provider](key, mdl, system, user_msg)
+    try:
+        return _CALL[provider](key, mdl, system, user_msg)
+    except Exception as primary_error:
+        if not fallback_provider or not fallback_api_key:
+            raise
+        try:
+            fb_provider, fb_key, fb_mdl = _resolve(fallback_provider, fallback_api_key, fallback_model)
+            return _CALL[fb_provider](fb_key, fb_mdl, system, user_msg)
+        except Exception:
+            # Le fallback a aussi échoué, on remonte l'erreur primaire
+            raise primary_error
+
+
+def _get_fallback():
+    """Récupère les paramètres du LLM de secours depuis session_state."""
+    import streamlit as st
+    fb_provider = st.session_state.get("fallback_provider")
+    fb_key = st.session_state.get("fallback_api_key")
+    if fb_provider and fb_key:
+        return fb_provider, fb_key, None
+    return None, None, None
 
 
 def generate_pois(destination_nom, destination_type, nb_pois, provider=None, api_key=None, model=None):
@@ -188,7 +211,9 @@ def generate_pois(destination_nom, destination_type, nb_pois, provider=None, api
         "latitude et longitude précises (WGS84). "
         "Trie du plus emblématique au moins emblématique."
     )
-    raw = _llm_call(provider, api_key, model, SYSTEM_POI, user_msg)
+    fb_p, fb_k, fb_m = _get_fallback()
+    raw = _llm_call(provider, api_key, model, SYSTEM_POI, user_msg,
+                     fallback_provider=fb_p, fallback_api_key=fb_k, fallback_model=fb_m)
     data = _extract_json(raw)
     return data.get("pois", [])
 
@@ -208,30 +233,47 @@ def generate_additional_poi(destination_nom, existing_pois, provider=None, api_k
         'Le JSON doit avoir la structure : {"rang": int, "nom": str, '
         '"type": str, "description": str, "latitude": float, "longitude": float}'
     )
-    raw = _llm_call(provider, api_key, model, system, user_msg)
+    fb_p, fb_k, fb_m = _get_fallback()
+    raw = _llm_call(provider, api_key, model, system, user_msg,
+                     fallback_provider=fb_p, fallback_api_key=fb_k, fallback_model=fb_m)
     data = _extract_json(raw)
-    # Si le LLM retourne un objet directement (pas dans une liste)
     if "nom" in data:
         return data
-    # Si le LLM retourne {"pois": [...]}
     pois = data.get("pois", [])
     return pois[0] if pois else None
 
 
-def generate_travel(destination_nom, pois, provider=None, api_key=None, model=None):
+def generate_travel(destination_nom, pois, transport_mode="mixte", provider=None, api_key=None, model=None):
     pois_desc = "\n".join(
         f"- {p['nom']} ({p['type']}, lat:{p['latitude']}, lon:{p['longitude']})"
         for p in pois
     )
+    transport_info = {
+        "à pied": "Le voyageur se déplace À PIED : regroupe les POI très proches (rayon ~2-3 km/jour).",
+        "vélo": "Le voyageur se déplace À VÉLO : rayon raisonnable 10-20 km/jour.",
+        "voiture": "Le voyageur se déplace EN VOITURE : rayon 50-150 km/jour possible.",
+        "train": "Le voyageur se déplace EN TRAIN : privilégie les POI accessibles par gares.",
+        "bateau": "Le voyageur se déplace EN BATEAU : privilégie les POI accessibles par la mer/les canaux.",
+        "transport public": "Le voyageur utilise les TRANSPORTS PUBLICS (métro, bus) : privilégie les POI desservis.",
+        "mixte": "Le voyageur combine plusieurs modes selon la pertinence locale (à pied en ville, voiture sur routes, bateau si îles).",
+    }.get(transport_mode, "Le voyageur adapte son mode de transport selon la destination.")
+
     user_msg = (
         f"Planifie un voyage jour par jour pour visiter « {destination_nom} ». "
         f"Voici les sites à visiter :\n{pois_desc}\n\n"
+        f"Mode de transport : {transport_mode}.\n"
+        f"{transport_info}\n\n"
         "Pour chaque jour, propose :\n"
-        "- Les sites (poi_noms) à visiter ce jour-là (regroupe par proximité géographique)\n"
-        "- Un hôtel bien noté pour la nuit (nom et adresse)\n"
-        "- Un restaurant bien noté pour le dîner (nom et adresse)\n"
-        "Optimise l'itinéraire pour minimiser les déplacements."
+        "- Les sites (poi_noms) à visiter ce jour-là (regroupe par proximité géographique "
+        "compatible avec le mode de transport)\n"
+        "- Un hôtel bien noté pour la nuit (hotel_nom, hotel_adresse, hotel_latitude, hotel_longitude)\n"
+        "- Un restaurant bien noté pour le dîner (restaurant_nom, restaurant_adresse, restaurant_latitude, restaurant_longitude)\n"
+        "IMPORTANT : chaque jour DOIT contenir les coordonnées GPS (latitude/longitude) "
+        "de l'hôtel ET du restaurant. Ne jamais omettre ces champs.\n"
+        "Optimise l'itinéraire pour minimiser les déplacements compte tenu du mode de transport."
     )
-    raw = _llm_call(provider, api_key, model, SYSTEM_TRAVEL, user_msg)
+    fb_p, fb_k, fb_m = _get_fallback()
+    raw = _llm_call(provider, api_key, model, SYSTEM_TRAVEL, user_msg,
+                     fallback_provider=fb_p, fallback_api_key=fb_k, fallback_model=fb_m)
     data = _extract_json(raw)
     return data.get("jours", [])

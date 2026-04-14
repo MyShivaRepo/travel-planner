@@ -32,6 +32,12 @@ if "api_key" not in st.session_state:
 if "llm_provider" not in st.session_state:
     saved_provider = db.get_setting("llm_provider")
     st.session_state["llm_provider"] = saved_provider or "Anthropic / Claude"
+if "fallback_provider" not in st.session_state:
+    st.session_state["fallback_provider"] = db.get_setting("fallback_provider") or ""
+if "fallback_api_key" not in st.session_state:
+    st.session_state["fallback_api_key"] = db.get_setting("fallback_api_key") or ""
+if "ors_api_key" not in st.session_state:
+    st.session_state["ors_api_key"] = db.get_setting("ors_api_key") or ""
 
 # ── Navigation horizontale compacte ──────────────────────────────────────────
 PAGES = ["Settings", "Where to Go", "Destination", "Travel"]

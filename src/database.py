@@ -17,6 +17,22 @@ def get_db():
         conn.close()
 
 
+def _migrate(conn):
+    """Ajoute les colonnes manquantes sans perdre de données."""
+    cursor = conn.execute("PRAGMA table_info(travel_days)")
+    existing_cols = {row["name"] for row in cursor.fetchall()}
+    for col, col_type in [("hotel_latitude", "REAL"), ("hotel_longitude", "REAL"),
+                          ("restaurant_latitude", "REAL"), ("restaurant_longitude", "REAL")]:
+        if col not in existing_cols:
+            conn.execute(f"ALTER TABLE travel_days ADD COLUMN {col} {col_type}")
+
+    # Ajout transport_mode dans travels
+    cursor = conn.execute("PRAGMA table_info(travels)")
+    existing_cols = {row["name"] for row in cursor.fetchall()}
+    if "transport_mode" not in existing_cols:
+        conn.execute("ALTER TABLE travels ADD COLUMN transport_mode TEXT DEFAULT 'mixte'")
+
+
 def init_db():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     with get_db() as conn:
@@ -42,6 +58,7 @@ def init_db():
             CREATE TABLE IF NOT EXISTS travels (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 destination_id INTEGER NOT NULL UNIQUE,
+                transport_mode TEXT DEFAULT 'mixte',
                 FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE
             );
 
@@ -51,8 +68,12 @@ def init_db():
                 numero INTEGER NOT NULL,
                 hotel_nom TEXT,
                 hotel_adresse TEXT,
+                hotel_latitude REAL,
+                hotel_longitude REAL,
                 restaurant_nom TEXT,
                 restaurant_adresse TEXT,
+                restaurant_latitude REAL,
+                restaurant_longitude REAL,
                 FOREIGN KEY (travel_id) REFERENCES travels(id) ON DELETE CASCADE
             );
 
@@ -69,6 +90,7 @@ def init_db():
                 value TEXT
             );
         """)
+        _migrate(conn)
 
 
 # ── Settings ─────────────────────────────────────────────────────────────────
@@ -156,17 +178,24 @@ def bulk_create_pois(destination_id, pois_list):
 
 # ── Travel CRUD ──────────────────────────────────────────────────────────────
 
-def save_travel(destination_id, days):
+def save_travel(destination_id, days, transport_mode="mixte"):
     with get_db() as conn:
         conn.execute("DELETE FROM travels WHERE destination_id = ?", (destination_id,))
-        cur = conn.execute("INSERT INTO travels (destination_id) VALUES (?)", (destination_id,))
+        cur = conn.execute(
+            "INSERT INTO travels (destination_id, transport_mode) VALUES (?, ?)",
+            (destination_id, transport_mode),
+        )
         travel_id = cur.lastrowid
         for day in days:
             day_cur = conn.execute(
                 "INSERT INTO travel_days (travel_id, numero, hotel_nom, hotel_adresse, "
-                "restaurant_nom, restaurant_adresse) VALUES (?, ?, ?, ?, ?, ?)",
+                "hotel_latitude, hotel_longitude, restaurant_nom, restaurant_adresse, "
+                "restaurant_latitude, restaurant_longitude) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (travel_id, day["numero"], day.get("hotel_nom"), day.get("hotel_adresse"),
-                 day.get("restaurant_nom"), day.get("restaurant_adresse")),
+                 day.get("hotel_latitude"), day.get("hotel_longitude"),
+                 day.get("restaurant_nom"), day.get("restaurant_adresse"),
+                 day.get("restaurant_latitude"), day.get("restaurant_longitude")),
             )
             day_id = day_cur.lastrowid
             for poi_id in day.get("poi_ids", []):
@@ -179,7 +208,7 @@ def save_travel(destination_id, days):
 def get_travel(destination_id):
     with get_db() as conn:
         travel = conn.execute(
-            "SELECT id FROM travels WHERE destination_id = ?", (destination_id,)
+            "SELECT id, transport_mode FROM travels WHERE destination_id = ?", (destination_id,)
         ).fetchone()
         if not travel:
             return None
@@ -197,4 +226,4 @@ def get_travel(destination_id):
             ).fetchall()
             day["pois"] = [dict(pr) for pr in poi_rows]
             days.append(day)
-        return days
+        return {"days": days, "transport_mode": travel["transport_mode"] or "mixte"}

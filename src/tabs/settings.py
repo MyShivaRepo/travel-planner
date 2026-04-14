@@ -19,45 +19,140 @@ def render():
     if "api_key_input" not in st.session_state:
         st.session_state["api_key_input"] = st.session_state["api_key"]
 
-    # Sélection du fournisseur
+    # Fallback
+    if "fallback_provider" not in st.session_state:
+        saved_fb = db.get_setting("fallback_provider")
+        st.session_state["fallback_provider"] = saved_fb if saved_fb in provider_names else ""
+    if "fallback_api_key" not in st.session_state:
+        saved_fb_key = db.get_setting("fallback_api_key")
+        st.session_state["fallback_api_key"] = saved_fb_key or ""
+    if "fallback_key_input" not in st.session_state:
+        st.session_state["fallback_key_input"] = st.session_state["fallback_api_key"]
+
+    # ── LLM Principal ────────────────────────────────────────────────────────
+    st.subheader("LLM Principal")
+
     current_idx = provider_names.index(st.session_state["llm_provider"]) if st.session_state["llm_provider"] in provider_names else 0
     provider = st.selectbox(
-        "Fournisseur LLM",
+        "Fournisseur",
         provider_names,
         index=current_idx,
         key="provider_select",
     )
 
-    # Clé API
     st.text_input(
         f"Clé API ({provider})",
         type="password",
-        help=f"Votre clé API pour {provider}.",
         key="api_key_input",
     )
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Enregistrer", type="primary"):
+        if st.button("Enregistrer", type="primary", key="save_primary"):
             key = st.session_state["api_key_input"].strip()
             st.session_state["api_key"] = key
             st.session_state["llm_provider"] = provider
             db.set_setting("api_key", key)
             db.set_setting("llm_provider", provider)
-            if key:
-                st.success(f"Clé API enregistrée pour {provider}.")
-            else:
-                st.warning("Clé API effacée.")
-
+            st.success(f"LLM principal enregistré : {provider}")
     with col2:
-        if st.button("Tester la clé"):
+        if st.button("Tester", key="test_primary"):
             key = st.session_state["api_key_input"].strip()
             if not key:
                 st.warning("Veuillez saisir une clé API.")
             else:
-                with st.spinner("Test de la clé API..."):
+                with st.spinner("Test..."):
                     ok, msg = test_api_key(provider, key)
-                if ok:
-                    st.success(msg)
+                st.success(msg) if ok else st.error(msg)
+
+    # ── LLM de Secours ───────────────────────────────────────────────────────
+    st.divider()
+    st.subheader("LLM de Secours (fallback)")
+    st.caption("Utilisé automatiquement si le LLM principal est indisponible (surcharge, timeout, erreur réseau).")
+
+    fb_options = ["Aucun"] + provider_names
+    current_fb = st.session_state.get("fallback_provider", "")
+    fb_idx = fb_options.index(current_fb) if current_fb in fb_options else 0
+
+    fb_provider = st.selectbox(
+        "Fournisseur de secours",
+        fb_options,
+        index=fb_idx,
+        key="fb_provider_select",
+    )
+
+    if fb_provider != "Aucun":
+        st.text_input(
+            f"Clé API ({fb_provider})",
+            type="password",
+            key="fallback_key_input",
+        )
+
+        col3, col4 = st.columns(2)
+        with col3:
+            if st.button("Enregistrer", type="primary", key="save_fallback"):
+                fb_key = st.session_state["fallback_key_input"].strip()
+                st.session_state["fallback_provider"] = fb_provider
+                st.session_state["fallback_api_key"] = fb_key
+                db.set_setting("fallback_provider", fb_provider)
+                db.set_setting("fallback_api_key", fb_key)
+                st.success(f"LLM de secours enregistré : {fb_provider}")
+        with col4:
+            if st.button("Tester", key="test_fallback"):
+                fb_key = st.session_state["fallback_key_input"].strip()
+                if not fb_key:
+                    st.warning("Veuillez saisir une clé API.")
                 else:
-                    st.error(msg)
+                    with st.spinner("Test..."):
+                        ok, msg = test_api_key(fb_provider, fb_key)
+                    st.success(msg) if ok else st.error(msg)
+    else:
+        # Effacer le fallback si "Aucun" est sélectionné
+        if st.session_state.get("fallback_provider"):
+            st.session_state["fallback_provider"] = ""
+            st.session_state["fallback_api_key"] = ""
+            db.set_setting("fallback_provider", "")
+            db.set_setting("fallback_api_key", "")
+
+    # ── API de routage (OpenRouteService) ────────────────────────────────────
+    st.divider()
+    st.subheader("API de routage (OpenRouteService)")
+    st.caption(
+        "Clé API optionnelle d'OpenRouteService pour calculer les vrais tracés routiers "
+        "(à pied, vélo, voiture). Gratuit sur openrouteservice.org (2000 req/jour). "
+        "Si vide, la carte affichera des lignes droites."
+    )
+
+    if "ors_api_key" not in st.session_state:
+        st.session_state["ors_api_key"] = db.get_setting("ors_api_key") or ""
+    if "ors_key_input" not in st.session_state:
+        st.session_state["ors_key_input"] = st.session_state["ors_api_key"]
+
+    st.text_input(
+        "Clé API OpenRouteService",
+        type="password",
+        key="ors_key_input",
+    )
+
+    col_ors_save, col_ors_test = st.columns(2)
+    with col_ors_save:
+        if st.button("Enregistrer", type="primary", key="save_ors"):
+            ors_key = st.session_state["ors_key_input"].strip()
+            st.session_state["ors_api_key"] = ors_key
+            db.set_setting("ors_api_key", ors_key)
+            st.success("Clé ORS enregistrée." if ors_key else "Clé ORS effacée.")
+    with col_ors_test:
+        if st.button("Tester", key="test_ors"):
+            ors_key = st.session_state["ors_key_input"].strip()
+            if not ors_key:
+                st.warning("Veuillez saisir une clé API.")
+            else:
+                from routing import get_route
+                with st.spinner("Test de la clé ORS..."):
+                    # Petit test : route Paris → Versailles à pied
+                    test_coords = [(48.8566, 2.3522), (48.8049, 2.1204)]
+                    result = get_route(test_coords, "à pied", ors_key)
+                if result:
+                    st.success("Clé ORS valide.")
+                else:
+                    st.error("Clé ORS invalide ou erreur API.")

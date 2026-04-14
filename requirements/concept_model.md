@@ -25,7 +25,7 @@ Un `POI` appartient à une seule `Destination` (relation N-1).
 
 ## Voyage
 
-Le concept de `Voyage` représente la planification complète pour une `Destination` avec `POI`.      
+Le concept de `Voyage` représente la planification complète pour une `Destination` avec ses `POIs` associés.        
 Il est caractérisé par :   
 - une liste de `Segments`  
 - chaque `Segment` à un 1 point de départ et 1 point d'arrivée   

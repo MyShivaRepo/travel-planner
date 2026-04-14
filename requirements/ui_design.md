@@ -25,8 +25,9 @@ Dans la dernière colonne du tableau :
 ## Onglet `Destination`
 
 Permet de visualiser l'ensemble des `POI` pour la destination sélectionnée.   
+Cet onglet contient deux sous-onglets :   
 
-### Tableau des POI
+### Sous-onglet `Tableau`
 
 La visualisation se fait dans un tableau triable avec les colonnes (Cf concept_model.md) :   
 - Rang   
@@ -42,9 +43,9 @@ Dans la dernière colonne du tableau :
 
 En bas du tableau, un `bouton` nommé `Ajouter` permet d'ajouter un nouveau `POI`.   
 
-### Carte géographique
+### Sous-onglet `Carte`
 
-Sous le tableau, une carte géographique affiche l'ensemble des `POI` de la destination.   
+Une carte géographique affiche l'ensemble des `POI` de la destination.   
 L'échelle de la carte est adaptée automatiquement pour visualiser tous les `POI`.   
 Chaque `POI` est représenté par un marqueur cliquable affichant son nom et sa description.   
 

@@ -3,7 +3,7 @@
 ## Destination
 
 Le 1er concept clef est le concept de `Destination`.   
-Il est caractérisé par :
+Il est caractérisé par :   
 - un `nom` : le nom de la destination (ex: "Italie", "Toscane", "Rome")
 - un `type` : Pays, Région, Ville
 
@@ -13,7 +13,7 @@ Une `Destination` peut avoir un `Voyage` associé (relation 1-1).
 ## POI (Point Of Interest)
 
 Le 2nd concept clef est le concept de `POI` (Point Of Interest).
-Il est caractérisé par :
+Il est caractérisé par :   
 - un `rang` : ordre de priorité du site à visiter
 - un `nom` : le nom du site
 - un `type` : Nature, Architecture, Histoire, ...
@@ -25,10 +25,13 @@ Un `POI` appartient à une seule `Destination` (relation N-1).
 
 ## Voyage
 
-Le concept de `Voyage` représente la planification complète pour une `Destination`.   
-Il est caractérisé par :
-- un `mode de transport` : à pied, en vélo, voiture, train, bus, bateau
-- une liste de `Jour` (relation 1-N)
+Le concept de `Voyage` représente la planification complète pour une `Destination` avec `POI`.      
+Il est caractérisé par :   
+- une liste de `Segments`  
+- chaque `Segment` à un 1 point de départ et 1 point d'arrivée   
+- Ces points peuvent être soit des `hotels`, soit des `POIs`   
+- Chaque `Segment` a un `mode de transport` : pied, vélo, voiture (personelle, location, taxi), bus, metro , train, bateau, avion.  
+
 
 ## Jour
 

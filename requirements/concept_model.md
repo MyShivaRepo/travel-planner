@@ -8,7 +8,7 @@ Il est caractérisé par :
 - un `type` : Pays, Région, Ville
 
 Une `Destination` contient 1 ou plusieurs `POI(s)` (relation 1-N).   
-Une `Destination` peut avoir un `Voyage` associé (relation 1-1).
+Une `Destination` peut avoir 1 ou plusieurs `Voyage(s)` associé (relation 1-1).
 
 ## POI (Point Of Interest)
 

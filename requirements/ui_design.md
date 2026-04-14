@@ -1,6 +1,6 @@
 # Design de l'IHM
 
-Les différents `onglets` suivants sont disposé de manière horizontale
+Les différents `onglets` suivants sont disposés de manière horizontale.    
 
 ## Onglet `Settings`
 

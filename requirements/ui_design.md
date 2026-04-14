@@ -1,21 +1,62 @@
 # Design de l'IHM
 
-Un `onglet` nommé `Settings` permet de saisir l'API Key de Claude.   
+## Onglet `Settings`
 
-Un `onglet` nommé `Where to Go` permet de saisir la  `Destination` et le nombre de `POI` à visiter. 
-Les différentes `Destinations` sont présentées dans un tableau avec autant de colonnes que d'attributs (Cf concept_model.md).   
-Dans la dernière colonne du tableau :
- - un `bouton` nommé `Modifier` permet d'accéder à la liste des `POI` pour cette `Destination`.   
- - un `bouton` nommé `Supprimer` permet de supprimer cette `Destination`.   
+Permet de saisir l'API Key de Claude.   
+Un bouton `Tester` permet de vérifier que la clé est valide.   
+Un message de confirmation ou d'erreur est affiché à l'utilisateur.   
 
-Un `onglet` nommé `Destination` permet de visualiser l'ensemble des `POI` pour cette destination.   
-La visualisation se fait dans un tableau avec autant de colonnes que d'attributs (Cf concept_model.md).   
-Dans la dernière colonne du tableau : 
- - un `bouton` nommé `Supprimer` permet de supprimer ce `POI`.
-En bas du tableau `bouton` nommé `Ajouter` permet d'ajoyter un nouveau `POI`.
+## Onglet `Where to Go`
 
-Un `onglet` nommé `Travel` permet de visualiser le vogage `Jour` par `Jour`
-Pour chaque `Jour` : 
-  - le système affiche les `POI` à visiter
-  - propose un hotel dans lequel séjourner
-  - propose un restaurant dans lequel diner
+Permet de saisir une nouvelle `Destination` :   
+- Champ `Nom` : le nom de la destination   
+- Champ `Type` : Pays, Région ou Ville (liste déroulante)   
+- Champ `Nombre de POI` : le nombre de sites à découvrir   
+- Un `bouton` nommé `Rechercher` lance la génération des POI via l'API Claude   
+
+Les différentes `Destinations` déjà enregistrées sont présentées dans un tableau avec les colonnes :   
+- Nom   
+- Type   
+
+Dans la dernière colonne du tableau :   
+- un `bouton` nommé `Modifier` permet d'accéder à la liste des `POI` pour cette `Destination` (bascule vers l'onglet `Destination`)   
+- un `bouton` nommé `Supprimer` permet de supprimer cette `Destination` et tous ses `POI` associés   
+
+## Onglet `Destination`
+
+Permet de visualiser l'ensemble des `POI` pour la destination sélectionnée.   
+
+### Tableau des POI
+
+La visualisation se fait dans un tableau triable avec les colonnes (Cf concept_model.md) :   
+- Rang   
+- Nom   
+- Type   
+- Description   
+- Latitude   
+- Longitude   
+
+Dans la dernière colonne du tableau :   
+- un `bouton` nommé `Modifier` permet de modifier les attributs de ce `POI`   
+- un `bouton` nommé `Supprimer` permet de supprimer ce `POI`   
+
+En bas du tableau, un `bouton` nommé `Ajouter` permet d'ajouter un nouveau `POI`.   
+
+### Carte géographique
+
+Sous le tableau, une carte géographique affiche l'ensemble des `POI` de la destination.   
+L'échelle de la carte est adaptée automatiquement pour visualiser tous les `POI`.   
+Chaque `POI` est représenté par un marqueur cliquable affichant son nom et sa description.   
+
+### Génération du voyage
+
+Un `bouton` nommé `Générer le voyage` permet de lancer la planification jour par jour via l'API Claude.   
+Ce bouton bascule ensuite vers l'onglet `Travel`.   
+
+## Onglet `Travel`
+
+Permet de visualiser le voyage `Jour` par `Jour`.   
+Pour chaque `Jour` :   
+- le système affiche les `POI` à visiter   
+- propose un hôtel dans lequel séjourner (nom, adresse)   
+- propose un restaurant dans lequel dîner (nom, adresse)   

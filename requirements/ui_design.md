@@ -49,9 +49,8 @@ Dans la dernière colonne du tableau :
 
 Permet de visualiser l'ensemble des `POI` pour la destination sélectionnée.
 En haut de l'onglet :
-- Le nom de la destination et son type
-- Une liste déroulante `Mode de transport` (à pied, vélo, voiture, train, bateau, transport public, mixte)
-- Un `bouton` nommé `Générer le voyage` qui lance la planification jour par jour via l'API du LLM et bascule vers l'onglet `Travel`
+- Le nom de la destination, son type et le nombre de POI
+- Un `bouton` nommé `Générer le voyage` qui lance la planification jour par jour via l'API du LLM et bascule vers l'onglet `Travel`. Chaque clic crée un NOUVEAU voyage (sans écraser les voyages existants).
 
 Cet onglet contient deux sous-onglets :
 
@@ -82,8 +81,13 @@ La carte occupe toute la hauteur disponible du navigateur.
 
 ## Onglet `Travel`
 
-Permet de visualiser le voyage jour par jour.
-En haut de l'onglet : nom de la destination, nombre de jours, mode de transport.
+Permet de visualiser les voyages planifiés pour la destination sélectionnée.
+
+En haut de l'onglet :
+- Une liste déroulante (`selectbox`) permettant de choisir parmi les voyages existants pour cette destination (triés du plus récent au plus ancien)
+- Un `bouton` nommé `Supprimer` pour supprimer le voyage sélectionné
+- Les informations du voyage sélectionné : nom de la destination, nombre de jours
+
 Cet onglet contient deux sous-onglets :
 
 ### Sous-onglet `Tableau`
@@ -92,19 +96,21 @@ Affichage jour par jour (expanders). Pour chaque `Jour` :
 - Les `POI` à visiter (rang, nom, type, description)
 - L'hôtel (nom, adresse)
 - Le restaurant (nom, adresse)
+- La liste ordonnée des `Segments` de la journée, chaque segment affichant :
+  - Le point de départ et d'arrivée (noms)
+  - Une liste déroulante permettant de changer son `mode de transport` (modification sauvegardée immédiatement)
 
 ### Sous-onglet `Carte`
 
 Affichage sur une carte géographique du parcours complet de chaque journée :
-- Pour chaque jour : hôtel du matin → POIs (dans l'ordre) → restaurant → hôtel du soir
-- Une couleur différente par jour pour distinguer les trajets
-- Si la clé OpenRouteService est configurée et le mode de transport est compatible (à pied, vélo, voiture) : le vrai tracé routier est affiché, avec la distance et la durée réelles dans les tooltips
-- Sinon : des lignes droites pointillées sont affichées
+- Chaque segment est tracé avec la couleur correspondant à son jour
+- Si la clé OpenRouteService est configurée et le mode de transport du segment est compatible (à pied, vélo, voiture personnelle, voiture de location, taxi, bus) : le vrai tracé routier est affiché, avec la distance et la durée réelles dans le tooltip
+- Sinon (modes non supportés par ORS : métro, train, bateau, avion, ou clé ORS absente) : des lignes droites pointillées sont affichées
 
 Les marqueurs sur la carte :
 - Les `hôtels` : marqueurs bleus avec l'icône "lit"
 - Les `restaurants` : marqueurs verts avec l'icône "fourchette"
 - Les `POIs` : marqueurs rouges circulaires avec le numéro de rang à l'intérieur
 
-La distance totale et la durée cumulée sont affichées au-dessus de la carte (si routage réel disponible).
+La distance totale et la durée cumulée (pour les segments routables) sont affichées au-dessus de la carte.
 La carte occupe toute la hauteur disponible du navigateur.

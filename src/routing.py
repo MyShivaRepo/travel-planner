@@ -11,13 +11,21 @@ ORS_BASE_URL = "https://api.openrouteservice.org/v2/directions"
 # Mapping mode transport (app) → profil ORS
 MODE_TO_ORS_PROFILE = {
     "à pied": "foot-walking",
-    "vélo": "cycling-regular",
+    "en vélo": "cycling-regular",
+    "voiture personnelle": "driving-car",
+    "voiture de location": "driving-car",
+    "taxi": "driving-car",
+    "bus": "driving-car",  # ORS n'a pas de profil bus, on utilise driving-car
+    # Rétrocompatibilité avec les anciens voyages en base :
     "voiture": "driving-car",
+    "vélo": "cycling-regular",
     # Les modes suivants ne sont pas supportés par ORS :
+    "métro": None,
     "train": None,
     "bateau": None,
+    "avion": None,
     "transport public": None,
-    "mixte": "driving-car",  # fallback sur voiture par défaut
+    "mixte": "driving-car",
 }
 
 
@@ -50,7 +58,12 @@ def get_route(coords, transport_mode, api_key, timeout=10):
         "Authorization": api_key,
         "Content-Type": "application/json",
     }
-    body = {"coordinates": ors_coords}
+    # radiuses: -1 signifie "pas de limite" pour trouver le point routable le plus proche
+    # (par défaut ORS limite à 350m ce qui échoue pour les POI en montagne, forêt, etc.)
+    body = {
+        "coordinates": ors_coords,
+        "radiuses": [-1] * len(ors_coords),
+    }
 
     try:
         resp = requests.post(url, headers=headers, json=body, timeout=timeout)

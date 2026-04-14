@@ -53,24 +53,16 @@ def render():
     api_key = st.session_state.get("api_key", "")
     provider = st.session_state.get("llm_provider")
 
-    # ── Ligne compacte : titre + mode transport + bouton Générer ────────────
-    TRANSPORT_MODES = ["à pied", "vélo", "voiture", "train", "bateau", "transport public", "mixte"]
-    col_dest, col_mode, col_gen = st.columns([3, 2, 2])
+    # ── Ligne compacte : titre + bouton Générer ─────────────────────────────
+    col_dest, col_gen = st.columns([4, 2])
     with col_dest:
         st.markdown(f"**{dest['nom']}** ({dest['type']}) — {len(pois)} POI")
-    with col_mode:
-        transport_mode = st.selectbox(
-            "Transport", TRANSPORT_MODES,
-            index=TRANSPORT_MODES.index("mixte"),
-            key="transport_mode_select",
-            label_visibility="collapsed",
-        )
     with col_gen:
         if pois and st.button("Générer le voyage", type="primary", use_container_width=True):
             if not api_key:
                 st.error("Configurez votre clé API dans Settings.")
             else:
-                _generate_voyage(dest, pois, api_key, provider, transport_mode)
+                _generate_voyage(dest, pois, api_key, provider)
 
     # ── Sous-onglets ─────────────────────────────────────────────────────────
     sub_tab_table, sub_tab_map = st.tabs(["Tableau", "Carte"])
@@ -265,15 +257,15 @@ def _render_map(pois):
     """, unsafe_allow_html=True)
 
 
-def _generate_voyage(dest, pois, api_key, provider, transport_mode="mixte"):
-    with st.spinner(f"Génération du voyage jour par jour ({transport_mode})..."):
+def _generate_voyage(dest, pois, api_key, provider):
+    with st.spinner("Génération du voyage jour par jour..."):
         try:
             pois_for_api = [
                 {"nom": p["nom"], "type": p["type"],
                  "latitude": p["latitude"], "longitude": p["longitude"]}
                 for p in pois
             ]
-            jours = generate_travel(dest["nom"], pois_for_api, transport_mode=transport_mode,
+            jours = generate_travel(dest["nom"], pois_for_api,
                                      provider=provider, api_key=api_key)
         except Exception as e:
             st.error(f"Erreur lors de la génération du voyage : {e}")
@@ -291,6 +283,19 @@ def _generate_voyage(dest, pois, api_key, provider, transport_mode="mixte"):
             pid = poi_name_to_id.get(nom.lower())
             if pid:
                 poi_ids.append(pid)
+        # Segments générés par le LLM
+        segments = []
+        for seg in jour.get("segments", []):
+            segments.append({
+                "from_name": seg.get("from_name", ""),
+                "from_latitude": seg.get("from_latitude"),
+                "from_longitude": seg.get("from_longitude"),
+                "to_name": seg.get("to_name", ""),
+                "to_latitude": seg.get("to_latitude"),
+                "to_longitude": seg.get("to_longitude"),
+                "transport_mode": seg.get("transport_mode", "voiture personnelle"),
+            })
+
         days_for_db.append({
             "numero": jour["numero"],
             "hotel_nom": jour.get("hotel_nom", ""),
@@ -302,8 +307,10 @@ def _generate_voyage(dest, pois, api_key, provider, transport_mode="mixte"):
             "restaurant_latitude": jour.get("restaurant_latitude"),
             "restaurant_longitude": jour.get("restaurant_longitude"),
             "poi_ids": poi_ids,
+            "segments": segments,
         })
 
-    db.save_travel(dest["id"], days_for_db, transport_mode=transport_mode)
+    travel_id = db.save_travel(dest["id"], days_for_db)
+    st.session_state["selected_travel_id"] = travel_id
     st.session_state["goto_page"] = "Travel"
     st.rerun()

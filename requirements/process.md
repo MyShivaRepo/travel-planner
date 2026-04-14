@@ -39,22 +39,22 @@ L'utilisateur peut :
 - Supprimer un POI
 - Ajouter un nouveau POI via le LLM (qui propose un site supplémentaire non déjà présent dans la liste)
 
-## 5. Sélection du mode de transport
+## 5. Génération d'un voyage
 
-Avant de générer le voyage, l'utilisateur choisit le `mode de transport` qu'il compte utiliser :
-à pied, vélo, voiture, train, bateau, transport public, ou mixte.
-Ce mode influence la manière dont le LLM regroupera les POI par jour (rayon de déplacement compatible avec le mode choisi).
+Lorsque l'utilisateur clique sur le bouton `Générer le voyage`, le système interroge l'API du LLM pour générer une proposition de voyage jour par jour.
+Chaque clic crée un NOUVEAU voyage (sans écraser les voyages existants). Une destination peut donc avoir plusieurs voyages associés.
 
-## 6. Génération du voyage
-
-Lorsque l'utilisateur clique sur le bouton `Générer le voyage`, le système interroge l'API du LLM pour générer une proposition de voyage jour par jour, en tenant compte du mode de transport.
-Pour chaque jour, le système propose :
-- Quel(s) site(s) (`POI`) visiter (regroupés par proximité géographique compatible avec le mode de transport)
+Pour chaque jour, le LLM propose :
+- Quel(s) site(s) (`POI`) visiter (regroupés par proximité géographique)
 - Dans quel hôtel séjourner le soir (nom, adresse, coordonnées GPS)
 - Dans quel restaurant (bien noté) se restaurer le soir (nom, adresse, coordonnées GPS)
+- La liste ordonnée des `Segments` de la journée (hôtel matin → POIs → restaurant → hôtel suivant)
+- Pour chaque segment, le mode de transport le plus pertinent (parmi : à pied, en vélo, voiture personnelle, voiture de location, taxi, bus, métro, train, bateau, avion)
 
-## 7. Visualisation du voyage
+## 6. Visualisation et ajustement du voyage
 
-Dans l'onglet `Travel`, l'utilisateur visualise le voyage jour par jour dans deux sous-onglets :
-- `Tableau` : description détaillée de chaque journée
+Dans l'onglet `Travel`, l'utilisateur sélectionne le voyage à visualiser parmi la liste des voyages de la destination, puis consulte deux sous-onglets :
+- `Tableau` : description détaillée de chaque journée ; l'utilisateur peut changer le mode de transport de chaque segment via une liste déroulante
 - `Carte` : tracé géographique du parcours complet de chaque journée, avec le vrai routage si la clé OpenRouteService est configurée et le mode de transport compatible
+
+L'utilisateur peut supprimer un voyage ou en générer un nouveau à tout moment.

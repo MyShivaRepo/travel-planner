@@ -27,11 +27,19 @@ SYSTEM_POI = (
 SYSTEM_TRAVEL = (
     "Tu es un expert en planification de voyages. "
     "Réponds UNIQUEMENT en JSON valide, sans texte avant ou après. "
-    'Le JSON doit avoir la structure : {"jours": [{"numero": int, '
-    '"poi_noms": [str], "hotel_nom": str, "hotel_adresse": str, '
-    '"hotel_latitude": float, "hotel_longitude": float, '
-    '"restaurant_nom": str, "restaurant_adresse": str, '
-    '"restaurant_latitude": float, "restaurant_longitude": float}, ...]}'
+    "Le JSON doit avoir la structure : "
+    '{"jours": [{'
+    '"numero": int, '
+    '"poi_noms": [str], '
+    '"hotel_nom": str, "hotel_adresse": str, "hotel_latitude": float, "hotel_longitude": float, '
+    '"restaurant_nom": str, "restaurant_adresse": str, "restaurant_latitude": float, "restaurant_longitude": float, '
+    '"segments": [{'
+    '"from_name": str, "from_latitude": float, "from_longitude": float, '
+    '"to_name": str, "to_latitude": float, "to_longitude": float, '
+    '"transport_mode": str (un de : "à pied", "en vélo", "voiture personnelle", '
+    '"voiture de location", "taxi", "bus", "métro", "train", "bateau", "avion")'
+    '}]'
+    '}]}'
 )
 
 
@@ -243,34 +251,32 @@ def generate_additional_poi(destination_nom, existing_pois, provider=None, api_k
     return pois[0] if pois else None
 
 
-def generate_travel(destination_nom, pois, transport_mode="mixte", provider=None, api_key=None, model=None):
+def generate_travel(destination_nom, pois, provider=None, api_key=None, model=None):
     pois_desc = "\n".join(
         f"- {p['nom']} ({p['type']}, lat:{p['latitude']}, lon:{p['longitude']})"
         for p in pois
     )
-    transport_info = {
-        "à pied": "Le voyageur se déplace À PIED : regroupe les POI très proches (rayon ~2-3 km/jour).",
-        "vélo": "Le voyageur se déplace À VÉLO : rayon raisonnable 10-20 km/jour.",
-        "voiture": "Le voyageur se déplace EN VOITURE : rayon 50-150 km/jour possible.",
-        "train": "Le voyageur se déplace EN TRAIN : privilégie les POI accessibles par gares.",
-        "bateau": "Le voyageur se déplace EN BATEAU : privilégie les POI accessibles par la mer/les canaux.",
-        "transport public": "Le voyageur utilise les TRANSPORTS PUBLICS (métro, bus) : privilégie les POI desservis.",
-        "mixte": "Le voyageur combine plusieurs modes selon la pertinence locale (à pied en ville, voiture sur routes, bateau si îles).",
-    }.get(transport_mode, "Le voyageur adapte son mode de transport selon la destination.")
 
     user_msg = (
         f"Planifie un voyage jour par jour pour visiter « {destination_nom} ». "
         f"Voici les sites à visiter :\n{pois_desc}\n\n"
-        f"Mode de transport : {transport_mode}.\n"
-        f"{transport_info}\n\n"
+        "Choisis le mode de transport le plus pertinent pour CHAQUE segment "
+        "(court trajet urbain → à pied ; transfert inter-villes → train ou voiture ; "
+        "traversée maritime → bateau ; très grande distance → avion).\n\n"
         "Pour chaque jour, propose :\n"
-        "- Les sites (poi_noms) à visiter ce jour-là (regroupe par proximité géographique "
-        "compatible avec le mode de transport)\n"
+        "- Les sites (poi_noms) à visiter ce jour-là (regroupe par proximité géographique)\n"
         "- Un hôtel bien noté pour la nuit (hotel_nom, hotel_adresse, hotel_latitude, hotel_longitude)\n"
         "- Un restaurant bien noté pour le dîner (restaurant_nom, restaurant_adresse, restaurant_latitude, restaurant_longitude)\n"
-        "IMPORTANT : chaque jour DOIT contenir les coordonnées GPS (latitude/longitude) "
-        "de l'hôtel ET du restaurant. Ne jamais omettre ces champs.\n"
-        "Optimise l'itinéraire pour minimiser les déplacements compte tenu du mode de transport."
+        "- Une liste ORDONNÉE de segments (segments) représentant les déplacements de la journée : "
+        "hôtel matin → POI1 → POI2 → ... → restaurant → hôtel soir (ou hôtel suivant pour le changement de ville). "
+        "Chaque segment a un from_name/from_latitude/from_longitude, un to_name/to_latitude/to_longitude, "
+        'et un transport_mode choisi parmi : "à pied", "en vélo", "voiture personnelle", '
+        '"voiture de location", "taxi", "bus", "métro", "train", "bateau", "avion". '
+        "Choisis le mode le plus pertinent pour chaque segment (court trajet urbain → à pied ; "
+        "transfert inter-villes → train ou voiture ; traversée maritime → bateau).\n"
+        "IMPORTANT : les coordonnées GPS de l'hôtel, du restaurant et de chaque segment "
+        "sont OBLIGATOIRES. Ne jamais omettre ces champs.\n"
+        "Optimise l'itinéraire pour minimiser les déplacements."
     )
     fb_p, fb_k, fb_m = _get_fallback()
     raw = _llm_call(provider, api_key, model, SYSTEM_TRAVEL, user_msg,

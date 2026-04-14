@@ -68,6 +68,7 @@ def render():
             with btn_col1:
                 if st.button("Visualiser", key=f"mod_{dest['id']}"):
                     st.session_state["selected_destination_id"] = dest["id"]
+                    st.session_state.pop("selected_travel_id", None)
                     st.session_state["goto_page"] = "Destination"
                     st.rerun()
             with btn_col2:

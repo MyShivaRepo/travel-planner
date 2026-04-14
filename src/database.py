@@ -30,7 +30,37 @@ def _migrate(conn):
     cursor = conn.execute("PRAGMA table_info(travels)")
     existing_cols = {row["name"] for row in cursor.fetchall()}
     if "transport_mode" not in existing_cols:
-        conn.execute("ALTER TABLE travels ADD COLUMN transport_mode TEXT DEFAULT 'mixte'")
+        conn.execute("ALTER TABLE travels ADD COLUMN transport_mode TEXT DEFAULT 'voiture'")
+
+    # Multi-voyages : retirer UNIQUE sur destination_id, ajouter nom + created_at
+    sql_row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='travels'"
+    ).fetchone()
+    if sql_row and "UNIQUE" in sql_row["sql"].upper():
+        # Recréer la table sans UNIQUE et avec les nouvelles colonnes
+        conn.executescript("""
+            PRAGMA foreign_keys = OFF;
+            CREATE TABLE travels_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                destination_id INTEGER NOT NULL,
+                transport_mode TEXT DEFAULT 'voiture',
+                nom TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE
+            );
+            INSERT INTO travels_new (id, destination_id, transport_mode)
+                SELECT id, destination_id, transport_mode FROM travels;
+            DROP TABLE travels;
+            ALTER TABLE travels_new RENAME TO travels;
+            PRAGMA foreign_keys = ON;
+        """)
+    else:
+        cursor = conn.execute("PRAGMA table_info(travels)")
+        existing_cols = {row["name"] for row in cursor.fetchall()}
+        if "nom" not in existing_cols:
+            conn.execute("ALTER TABLE travels ADD COLUMN nom TEXT")
+        if "created_at" not in existing_cols:
+            conn.execute("ALTER TABLE travels ADD COLUMN created_at TEXT DEFAULT CURRENT_TIMESTAMP")
 
 
 def init_db():
@@ -57,8 +87,10 @@ def init_db():
 
             CREATE TABLE IF NOT EXISTS travels (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                destination_id INTEGER NOT NULL UNIQUE,
-                transport_mode TEXT DEFAULT 'mixte',
+                destination_id INTEGER NOT NULL,
+                transport_mode TEXT DEFAULT 'voiture',
+                nom TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE
             );
 
@@ -83,6 +115,20 @@ def init_db():
                 PRIMARY KEY (day_id, poi_id),
                 FOREIGN KEY (day_id) REFERENCES travel_days(id) ON DELETE CASCADE,
                 FOREIGN KEY (poi_id) REFERENCES pois(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS segments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                day_id INTEGER NOT NULL,
+                ordre INTEGER NOT NULL,
+                from_name TEXT,
+                from_latitude REAL,
+                from_longitude REAL,
+                to_name TEXT,
+                to_latitude REAL,
+                to_longitude REAL,
+                transport_mode TEXT NOT NULL DEFAULT 'voiture',
+                FOREIGN KEY (day_id) REFERENCES travel_days(id) ON DELETE CASCADE
             );
 
             CREATE TABLE IF NOT EXISTS settings (
@@ -178,12 +224,12 @@ def bulk_create_pois(destination_id, pois_list):
 
 # ── Travel CRUD ──────────────────────────────────────────────────────────────
 
-def save_travel(destination_id, days, transport_mode="mixte"):
+def save_travel(destination_id, days, transport_mode="voiture", nom=None):
+    """Crée un nouveau voyage (sans supprimer les existants). Retourne son id."""
     with get_db() as conn:
-        conn.execute("DELETE FROM travels WHERE destination_id = ?", (destination_id,))
         cur = conn.execute(
-            "INSERT INTO travels (destination_id, transport_mode) VALUES (?, ?)",
-            (destination_id, transport_mode),
+            "INSERT INTO travels (destination_id, transport_mode, nom) VALUES (?, ?, ?)",
+            (destination_id, transport_mode, nom),
         )
         travel_id = cur.lastrowid
         for day in days:
@@ -203,12 +249,40 @@ def save_travel(destination_id, days, transport_mode="mixte"):
                     "INSERT INTO travel_day_pois (day_id, poi_id) VALUES (?, ?)",
                     (day_id, poi_id),
                 )
+            for idx, seg in enumerate(day.get("segments", [])):
+                conn.execute(
+                    "INSERT INTO segments (day_id, ordre, from_name, from_latitude, from_longitude, "
+                    "to_name, to_latitude, to_longitude, transport_mode) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (day_id, idx,
+                     seg.get("from_name"), seg.get("from_latitude"), seg.get("from_longitude"),
+                     seg.get("to_name"), seg.get("to_latitude"), seg.get("to_longitude"),
+                     seg.get("transport_mode", transport_mode)),
+                )
+        return travel_id
 
 
-def get_travel(destination_id):
+def list_travels(destination_id):
+    """Liste tous les voyages d'une destination, du plus récent au plus ancien."""
+    with get_db() as conn:
+        rows = conn.execute(
+            "SELECT id, nom, transport_mode, created_at FROM travels "
+            "WHERE destination_id = ? ORDER BY id DESC",
+            (destination_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def delete_travel(travel_id):
+    with get_db() as conn:
+        conn.execute("DELETE FROM travels WHERE id = ?", (travel_id,))
+
+
+def get_travel_by_id(travel_id):
     with get_db() as conn:
         travel = conn.execute(
-            "SELECT id, transport_mode FROM travels WHERE destination_id = ?", (destination_id,)
+            "SELECT id, destination_id, transport_mode, nom, created_at FROM travels WHERE id = ?",
+            (travel_id,),
         ).fetchone()
         if not travel:
             return None
@@ -225,5 +299,25 @@ def get_travel(destination_id):
                 (day["id"],),
             ).fetchall()
             day["pois"] = [dict(pr) for pr in poi_rows]
+            seg_rows = conn.execute(
+                "SELECT * FROM segments WHERE day_id = ? ORDER BY ordre",
+                (day["id"],),
+            ).fetchall()
+            day["segments"] = [dict(s) for s in seg_rows]
             days.append(day)
-        return {"days": days, "transport_mode": travel["transport_mode"] or "mixte"}
+        return {
+            "id": travel["id"],
+            "destination_id": travel["destination_id"],
+            "days": days,
+            "transport_mode": travel["transport_mode"] or "voiture",
+            "nom": travel["nom"],
+            "created_at": travel["created_at"],
+        }
+
+
+def update_segment_mode(segment_id, transport_mode):
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE segments SET transport_mode = ? WHERE id = ?",
+            (transport_mode, segment_id),
+        )

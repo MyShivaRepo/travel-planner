@@ -5,6 +5,8 @@ import folium
 import database as db
 from routing import get_route, format_duration, format_distance
 
+TRANSPORT_MODES = ["à pied", "en vélo", "voiture", "train", "bus", "bateau"]
+
 # Couleurs par jour pour distinguer les trajectoires
 DAY_COLORS = ["blue", "red", "green", "purple", "orange", "darkred", "darkblue",
               "darkgreen", "cadetblue", "pink", "gray", "black"]
@@ -21,20 +23,59 @@ def render():
         st.warning("Destination introuvable.")
         return
 
-    travel = db.get_travel(dest_id)
-    if not travel:
+    # ── Liste des voyages pour cette destination ────────────────────────────
+    travels_list = db.list_travels(dest_id)
+    if not travels_list:
         st.info(
             f"Aucun voyage planifié pour « {dest['nom']} ». "
             "Rendez-vous dans l'onglet « Destination » pour en générer un."
         )
         return
 
+    # Déterminer le voyage sélectionné
+    selected_id = st.session_state.get("selected_travel_id")
+    ids = [t["id"] for t in travels_list]
+    if selected_id not in ids:
+        selected_id = ids[0]  # plus récent
+        st.session_state["selected_travel_id"] = selected_id
+
+    # ── Sélecteur de voyage + actions ────────────────────────────────────────
+    def _label(t):
+        date = (t.get("created_at") or "")[:16].replace("T", " ")
+        base = t.get("nom") or f"Voyage #{t['id']}"
+        return f"{base} — {t['transport_mode']} — {date}"
+
+    col_sel, col_del = st.columns([5, 1])
+    with col_sel:
+        choice = st.selectbox(
+            "Voyage",
+            travels_list,
+            index=ids.index(selected_id),
+            format_func=_label,
+            key="travel_selector",
+            label_visibility="collapsed",
+        )
+        if choice["id"] != selected_id:
+            st.session_state["selected_travel_id"] = choice["id"]
+            st.rerun()
+    with col_del:
+        if st.button("Supprimer", key="del_travel"):
+            db.delete_travel(selected_id)
+            st.session_state.pop("selected_travel_id", None)
+            st.rerun()
+
+    # ── Chargement du voyage sélectionné ────────────────────────────────────
+    travel = db.get_travel_by_id(selected_id)
+    if not travel:
+        st.warning("Voyage introuvable.")
+        return
+
     days = travel["days"]
     transport_mode = travel["transport_mode"]
 
     st.markdown(
-        f"**Voyage : {dest['nom']}** ({dest['type']}) — {len(days)} jours — "
-        f"Transport : *{transport_mode}*"
+        f"**{dest['nom']}** ({dest['type']}) — {len(days)} jours — "
+        f"Mode préféré : *{transport_mode}*"
     )
 
     sub_tab_table, sub_tab_map = st.tabs(["Tableau", "Carte"])
@@ -43,7 +84,7 @@ def render():
         _render_table(days)
 
     with sub_tab_map:
-        _render_map(days, transport_mode)
+        _render_map(days)
 
 
 def _render_table(days):
@@ -56,55 +97,45 @@ def _render_table(days):
             else:
                 st.markdown("*Aucun site prévu ce jour.*")
 
-            st.markdown("---")
-
             col_hotel, col_resto = st.columns(2)
             with col_hotel:
                 st.markdown("**Hôtel**")
                 st.markdown(f"{day.get('hotel_nom', 'Non défini')}")
                 if day.get("hotel_adresse"):
                     st.caption(day["hotel_adresse"])
-
             with col_resto:
                 st.markdown("**Restaurant**")
                 st.markdown(f"{day.get('restaurant_nom', 'Non défini')}")
                 if day.get("restaurant_adresse"):
                     st.caption(day["restaurant_adresse"])
 
-
-def _build_day_path(day, next_day=None):
-    """
-    Construit la liste ordonnée des étapes d'une journée :
-    hôtel matin → POIs (ordre rang) → restaurant → hôtel suivant (ou même hôtel le dernier jour).
-    Retourne une liste de tuples (type, nom, lat, lon).
-    """
-    path = []
-    if day.get("hotel_latitude") and day.get("hotel_longitude"):
-        path.append(("hotel_start", day.get("hotel_nom", "Hôtel"),
-                     day["hotel_latitude"], day["hotel_longitude"]))
-
-    for poi in day.get("pois", []):
-        path.append(("poi", poi["nom"], poi["latitude"], poi["longitude"]))
-
-    if day.get("restaurant_latitude") and day.get("restaurant_longitude"):
-        path.append(("restaurant", day.get("restaurant_nom", "Restaurant"),
-                     day["restaurant_latitude"], day["restaurant_longitude"]))
-
-    # Retour à l'hôtel du soir (= hôtel du jour suivant si existe, sinon même hôtel)
-    if next_day and next_day.get("hotel_latitude") and next_day.get("hotel_longitude"):
-        path.append(("hotel_end", next_day.get("hotel_nom", "Hôtel"),
-                     next_day["hotel_latitude"], next_day["hotel_longitude"]))
-    elif day.get("hotel_latitude") and day.get("hotel_longitude"):
-        path.append(("hotel_end", day.get("hotel_nom", "Hôtel"),
-                     day["hotel_latitude"], day["hotel_longitude"]))
-
-    return path
+            # ── Segments ─────────────────────────────────────────────────────
+            segments = day.get("segments", [])
+            if segments:
+                st.markdown("**Trajets (segments) :**")
+                for seg in segments:
+                    c1, c2 = st.columns([4, 2])
+                    with c1:
+                        st.markdown(
+                            f"- **{seg['from_name']}** → **{seg['to_name']}**"
+                        )
+                    with c2:
+                        current_mode = seg.get("transport_mode", "voiture")
+                        idx = TRANSPORT_MODES.index(current_mode) if current_mode in TRANSPORT_MODES else 2
+                        new_mode = st.selectbox(
+                            "Mode",
+                            TRANSPORT_MODES,
+                            index=idx,
+                            key=f"seg_mode_{seg['id']}",
+                            label_visibility="collapsed",
+                        )
+                        if new_mode != current_mode:
+                            db.update_segment_mode(seg["id"], new_mode)
+                            st.rerun()
 
 
-def _render_map(days, transport_mode):
+def _render_map(days):
     all_coords = []
-
-    # Collecter toutes les coordonnées pour centrer la carte
     for day in days:
         if day.get("hotel_latitude") and day.get("hotel_longitude"):
             all_coords.append((day["hotel_latitude"], day["hotel_longitude"]))
@@ -132,31 +163,29 @@ def _render_map(days, transport_mode):
     total_duration = 0
     total_distance = 0
     use_real_routing = False
+    has_unsupported_mode = False
 
-    # Parcours complet par jour, segment par segment
+    # Tracer chaque segment selon SON mode de transport
     for i, day in enumerate(days):
         day_color = DAY_COLORS[i % len(DAY_COLORS)]
-        next_day = days[i + 1] if i + 1 < len(days) else None
-        path = _build_day_path(day, next_day)
+        for seg in day.get("segments", []):
+            if not (seg.get("from_latitude") and seg.get("from_longitude")
+                    and seg.get("to_latitude") and seg.get("to_longitude")):
+                continue
 
-        if len(path) < 2:
-            continue
+            seg_coords = [(seg["from_latitude"], seg["from_longitude"]),
+                          (seg["to_latitude"], seg["to_longitude"])]
+            seg_mode = seg.get("transport_mode", "voiture")
 
-        # Router chaque segment individuellement (A → B)
-        for j in range(len(path) - 1):
-            seg_start = path[j]
-            seg_end = path[j + 1]
-            seg_coords = [(seg_start[2], seg_start[3]), (seg_end[2], seg_end[3])]
-
-            route_data = get_route(seg_coords, transport_mode, ors_key) if ors_key else None
+            route_data = get_route(seg_coords, seg_mode, ors_key) if ors_key else None
 
             if route_data:
                 use_real_routing = True
                 total_duration += route_data["duration"]
                 total_distance += route_data["distance"]
                 tooltip = (
-                    f"Jour {day['numero']} : {seg_start[1]} → {seg_end[1]} — "
-                    f"{format_distance(route_data['distance'])}, "
+                    f"J{day['numero']} : {seg['from_name']} → {seg['to_name']} — "
+                    f"{seg_mode} — {format_distance(route_data['distance'])}, "
                     f"{format_duration(route_data['duration'])}"
                 )
                 folium.PolyLine(
@@ -167,21 +196,22 @@ def _render_map(days, transport_mode):
                     tooltip=tooltip,
                 ).add_to(m)
             else:
-                # Fallback : ligne droite pour ce segment uniquement
+                if seg_mode in ("train", "bateau"):
+                    has_unsupported_mode = True
                 folium.PolyLine(
                     seg_coords,
                     color=day_color,
                     weight=3,
                     opacity=0.6,
                     dash_array="8",
-                    tooltip=f"Jour {day['numero']} : {seg_start[1]} → {seg_end[1]} (ligne directe)",
+                    tooltip=f"J{day['numero']} : {seg['from_name']} → {seg['to_name']} — {seg_mode} (ligne directe)",
                 ).add_to(m)
 
-    # Marqueurs (hôtels, restaurants, POIs)
+    # Marqueurs
     for day in days:
         jour_num = day["numero"]
 
-        # Hôtel bleu avec icône lit
+        # Hôtel bleu
         if day.get("hotel_latitude") and day.get("hotel_longitude"):
             folium.Marker(
                 location=[day["hotel_latitude"], day["hotel_longitude"]],
@@ -195,7 +225,7 @@ def _render_map(days, transport_mode):
                 icon=folium.Icon(color="blue", icon="bed", prefix="fa"),
             ).add_to(m)
 
-        # Restaurant vert avec icône fourchette
+        # Restaurant vert
         if day.get("restaurant_latitude") and day.get("restaurant_longitude"):
             folium.Marker(
                 location=[day["restaurant_latitude"], day["restaurant_longitude"]],
@@ -209,7 +239,7 @@ def _render_map(days, transport_mode):
                 icon=folium.Icon(color="green", icon="cutlery", prefix="fa"),
             ).add_to(m)
 
-        # POIs en rouge avec numéro de rang
+        # POIs rouges numérotés
         for poi in day.get("pois", []):
             folium.Marker(
                 location=[poi["latitude"], poi["longitude"]],
@@ -233,21 +263,20 @@ def _render_map(days, transport_mode):
     # Infos globales
     if use_real_routing and total_distance > 0:
         st.caption(
-            f"Itinéraire total ({transport_mode}) : "
+            f"Itinéraire réel (segments routables) : "
             f"{format_distance(total_distance)} — {format_duration(total_duration)}"
         )
-    elif not ors_key:
+    if has_unsupported_mode:
         st.caption(
-            "Tracés en lignes droites. Pour afficher les vrais itinéraires, "
-            "configurez une clé OpenRouteService dans Settings."
+            "Les segments en *train* ou *bateau* ne sont pas routables via OpenRouteService → "
+            "affichés en lignes droites."
         )
-    elif transport_mode in ("train", "bateau", "transport public"):
+    if not ors_key:
         st.caption(
-            f"Mode « {transport_mode} » non supporté par OpenRouteService — "
-            f"affichage en lignes droites."
+            "Aucune clé OpenRouteService configurée → tracés en lignes droites. "
+            "Configurez une clé dans Settings pour afficher les vrais itinéraires."
         )
 
-    # Rendu carte plein viewport
     map_html = m._repr_html_()
     fullscreen_html = f"""
     <style>

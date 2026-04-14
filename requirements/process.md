@@ -1,13 +1,13 @@
 # Process
 Ce fichier décrit le processus suivi par l'utilisateur pour plannifier son voyage.   
 
-L'utilisateur saisi sa destination.   
+L'utilisateur saisi sa `Destination`.   
 (Ce peut être un pays, une région ou bien une ville)   
 
-Le système détermine alors les sites "à ne pas manquer" pour cette destination.   
+Le système détermine alors les sites "à ne pas manquer" (`POI`) pour cette destination.   
 
-Le système présentes sites dans un tableau :
-- Rang du site
+Le système présente les sites (`POI`) dans un tableau :
+- Rang du site 
 - Nom du site   
 - Description   
 - Type de site (Nature, Histoire, Architecture, ...)   

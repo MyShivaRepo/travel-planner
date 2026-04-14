@@ -30,7 +30,7 @@ Il est caractérisé par :
 - une liste de `Segments`  
 - chaque `Segment` à un 1 point de départ et 1 point d'arrivée   
 - ces points peuvent être soit des `hotels`, soit des `POIs`   
-- chaque `Segment` a un `mode de transport` affecté : pied, vélo, voiture (personelle, location, taxi), bus, metro , train, bateau, avion.  
+- chaque `Segment` a un `mode de transport` affecté : pied, vélo, voiture (personelle, location, taxi), bus, metro, train, bateau, avion.  
 
 
 ## Jour

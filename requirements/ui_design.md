@@ -4,7 +4,9 @@ Les différents `onglets` suivants sont disposés de manière horizontale.
 
 ## Onglet `Settings`
 
-Permet de saisir l'API Key de Claude.   
+Permet de saisir l'`API Key` d'un fournisseur de LLM (Large Language Model).
+Sélectionner un fournisseur (Anthropic/Claude, OpenAI/ChatGPT, Google/Gemini, ...).   
+Entrer la clef.   
 Un bouton `Tester` permet de vérifier que la clé est valide.   
 Un message de confirmation ou d'erreur est affiché à l'utilisateur.   
 

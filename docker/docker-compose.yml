@@ -5,8 +5,13 @@ services:
       dockerfile: docker/Dockerfile
     container_name: travel-planner
     ports:
-      - "8501:8501"
+      - "9999:9999"
     environment:
-      # La clé API peut aussi être saisie directement dans l'IHM
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - DB_PATH=/data/travel_planner.db
+    volumes:
+      - travel-data:/data
     restart: unless-stopped
+
+volumes:
+  travel-data:

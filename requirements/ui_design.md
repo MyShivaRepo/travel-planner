@@ -1,5 +1,7 @@
 # Design de l'IHM
 
+Les différents `onglets` suivants sont disposé de manière horizontale
+
 ## Onglet `Settings`
 
 Permet de saisir l'API Key de Claude.   

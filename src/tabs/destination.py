@@ -5,6 +5,7 @@ import pandas as pd
 
 import database as db
 from llm_api import generate_travel, generate_additional_poi
+from routing import compute_segment_metrics
 
 # ── Couleurs des marqueurs par type de POI ───────────────────────────────────
 CATEGORY_COLORS = {
@@ -276,6 +277,9 @@ def _generate_voyage(dest, pois, api_key, provider):
         return
 
     poi_name_to_id = {p["nom"].lower(): p["id"] for p in pois}
+    ors_key = st.session_state.get("ors_api_key", "")
+    gmaps_key = st.session_state.get("gmaps_api_key", "")
+
     days_for_db = []
     for jour in jours:
         poi_ids = []
@@ -283,17 +287,28 @@ def _generate_voyage(dest, pois, api_key, provider):
             pid = poi_name_to_id.get(nom.lower())
             if pid:
                 poi_ids.append(pid)
-        # Segments générés par le LLM
+        # Segments générés par le LLM, avec calcul de distance/durée
         segments = []
         for seg in jour.get("segments", []):
+            seg_mode = seg.get("transport_mode", "voiture personnelle")
+            lat1, lon1 = seg.get("from_latitude"), seg.get("from_longitude")
+            lat2, lon2 = seg.get("to_latitude"), seg.get("to_longitude")
+            dist_m = duration_sec = None
+            if lat1 and lon1 and lat2 and lon2:
+                dist_m, duration_sec = compute_segment_metrics(
+                    seg_mode, [(lat1, lon1), (lat2, lon2)], ors_key, gmaps_key,
+                )
             segments.append({
                 "from_name": seg.get("from_name", ""),
-                "from_latitude": seg.get("from_latitude"),
-                "from_longitude": seg.get("from_longitude"),
+                "from_latitude": lat1,
+                "from_longitude": lon1,
                 "to_name": seg.get("to_name", ""),
-                "to_latitude": seg.get("to_latitude"),
-                "to_longitude": seg.get("to_longitude"),
-                "transport_mode": seg.get("transport_mode", "voiture personnelle"),
+                "to_latitude": lat2,
+                "to_longitude": lon2,
+                "transport_mode": seg_mode,
+                "distance_m": dist_m,
+                "duration_sec": duration_sec,
+                "budget": seg.get("budget"),
             })
 
         days_for_db.append({
@@ -302,10 +317,12 @@ def _generate_voyage(dest, pois, api_key, provider):
             "hotel_adresse": jour.get("hotel_adresse", ""),
             "hotel_latitude": jour.get("hotel_latitude"),
             "hotel_longitude": jour.get("hotel_longitude"),
+            "hotel_budget": jour.get("hotel_budget"),
             "restaurant_nom": jour.get("restaurant_nom", ""),
             "restaurant_adresse": jour.get("restaurant_adresse", ""),
             "restaurant_latitude": jour.get("restaurant_latitude"),
             "restaurant_longitude": jour.get("restaurant_longitude"),
+            "restaurant_budget": jour.get("restaurant_budget"),
             "poi_ids": poi_ids,
             "segments": segments,
         })

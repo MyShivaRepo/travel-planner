@@ -2,8 +2,10 @@ import streamlit as st
 import streamlit.components.v1 as components
 import folium
 
+import pandas as pd
+
 import database as db
-from routing import get_route, format_duration, format_distance
+from routing import get_route, format_duration, format_distance, compute_segment_metrics
 from google_routing import get_transit_route, great_circle_route
 
 
@@ -83,8 +85,24 @@ def render():
 
 
 def _render_table(days):
+    ors_key = st.session_state.get("ors_api_key", "")
+    gmaps_key = st.session_state.get("gmaps_api_key", "")
+
     for day in days:
-        with st.expander(f"Jour {day['numero']}", expanded=True):
+        segments = day.get("segments", [])
+
+        # Agrégats du jour
+        total_dist = sum((s.get("distance_m") or 0) for s in segments)
+        total_dur = sum((s.get("duration_sec") or 0) for s in segments)
+        total_budget = sum((s.get("budget") or 0) for s in segments)
+        total_budget += (day.get("hotel_budget") or 0) + (day.get("restaurant_budget") or 0)
+
+        header = (
+            f"Jour {day['numero']} — {format_distance(total_dist)} — "
+            f"{format_duration(total_dur)} — {total_budget:.0f} €"
+        )
+
+        with st.expander(header, expanded=True):
             # 1. Liste des sites à visiter (classés par rang)
             st.markdown("**Liste des sites à visiter** *(classés par leur Rang)*")
             if day["pois"]:
@@ -94,19 +112,23 @@ def _render_table(days):
             else:
                 st.markdown("*Aucun site prévu ce jour.*")
 
-            # 2. Liste des segments
-            segments = day.get("segments", [])
+            # 2. Liste des segments (tableau avec édition du mode inline)
             if segments:
                 st.markdown("**Liste des segments**")
+                # En-têtes
+                h1, h2, h3, h4, h5 = st.columns([3, 2, 1.2, 1.2, 1])
+                h1.markdown("**From > To**")
+                h2.markdown("**Mode**")
+                h3.markdown("**Distance**")
+                h4.markdown("**Durée**")
+                h5.markdown("**Budget**")
+
                 for seg in segments:
-                    c1, c2 = st.columns([5, 2])
-                    with c1:
-                        st.markdown(
-                            f"- {seg['from_name']} > {seg['to_name']} :"
-                        )
+                    c1, c2, c3, c4, c5 = st.columns([3, 2, 1.2, 1.2, 1])
+                    c1.write(f"{seg['from_name']} > {seg['to_name']}")
+                    current_mode = seg.get("transport_mode", "voiture")
+                    idx = TRANSPORT_MODES.index(current_mode) if current_mode in TRANSPORT_MODES else 2
                     with c2:
-                        current_mode = seg.get("transport_mode", "voiture")
-                        idx = TRANSPORT_MODES.index(current_mode) if current_mode in TRANSPORT_MODES else 2
                         new_mode = st.selectbox(
                             "Mode",
                             TRANSPORT_MODES,
@@ -114,19 +136,39 @@ def _render_table(days):
                             key=f"seg_mode_{seg['id']}",
                             label_visibility="collapsed",
                         )
-                        if new_mode != current_mode:
-                            db.update_segment_mode(seg["id"], new_mode)
-                            st.rerun()
+                    c3.write(format_distance(seg.get("distance_m") or 0))
+                    c4.write(format_duration(seg.get("duration_sec") or 0))
+                    budget_val = seg.get("budget")
+                    c5.write(f"{budget_val:.0f} €" if budget_val is not None else "—")
+
+                    # Recalculer distance/durée si le mode a changé
+                    if new_mode != current_mode:
+                        if (seg.get("from_latitude") and seg.get("from_longitude")
+                                and seg.get("to_latitude") and seg.get("to_longitude")):
+                            new_dist, new_dur = compute_segment_metrics(
+                                new_mode,
+                                [(seg["from_latitude"], seg["from_longitude"]),
+                                 (seg["to_latitude"], seg["to_longitude"])],
+                                ors_key, gmaps_key,
+                            )
+                        else:
+                            new_dist, new_dur = None, None
+                        db.update_segment_mode(seg["id"], new_mode, new_dist, new_dur)
+                        st.rerun()
 
             # 3. Logistique du soir
             st.markdown("**Logistique du soir**")
             hotel_line = f"- **Hôtel** : {day.get('hotel_nom', 'Non défini')}"
             if day.get("hotel_adresse"):
                 hotel_line += f" — {day['hotel_adresse']}"
+            if day.get("hotel_budget"):
+                hotel_line += f" — **{day['hotel_budget']:.0f} €** / nuit"
             st.markdown(hotel_line)
             resto_line = f"- **Restaurant** : {day.get('restaurant_nom', 'Non défini')}"
             if day.get("restaurant_adresse"):
                 resto_line += f" — {day['restaurant_adresse']}"
+            if day.get("restaurant_budget"):
+                resto_line += f" — **{day['restaurant_budget']:.0f} €** / personne"
             st.markdown(resto_line)
 
 

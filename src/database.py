@@ -22,9 +22,17 @@ def _migrate(conn):
     cursor = conn.execute("PRAGMA table_info(travel_days)")
     existing_cols = {row["name"] for row in cursor.fetchall()}
     for col, col_type in [("hotel_latitude", "REAL"), ("hotel_longitude", "REAL"),
-                          ("restaurant_latitude", "REAL"), ("restaurant_longitude", "REAL")]:
+                          ("restaurant_latitude", "REAL"), ("restaurant_longitude", "REAL"),
+                          ("hotel_budget", "REAL"), ("restaurant_budget", "REAL")]:
         if col not in existing_cols:
             conn.execute(f"ALTER TABLE travel_days ADD COLUMN {col} {col_type}")
+
+    # Colonnes métriques sur segments
+    cursor = conn.execute("PRAGMA table_info(segments)")
+    existing_seg_cols = {row["name"] for row in cursor.fetchall()}
+    for col, col_type in [("distance_m", "REAL"), ("duration_sec", "REAL"), ("budget", "REAL")]:
+        if col not in existing_seg_cols and existing_seg_cols:
+            conn.execute(f"ALTER TABLE segments ADD COLUMN {col} {col_type}")
 
     # Ajout transport_mode dans travels
     cursor = conn.execute("PRAGMA table_info(travels)")
@@ -102,10 +110,12 @@ def init_db():
                 hotel_adresse TEXT,
                 hotel_latitude REAL,
                 hotel_longitude REAL,
+                hotel_budget REAL,
                 restaurant_nom TEXT,
                 restaurant_adresse TEXT,
                 restaurant_latitude REAL,
                 restaurant_longitude REAL,
+                restaurant_budget REAL,
                 FOREIGN KEY (travel_id) REFERENCES travels(id) ON DELETE CASCADE
             );
 
@@ -128,6 +138,9 @@ def init_db():
                 to_latitude REAL,
                 to_longitude REAL,
                 transport_mode TEXT NOT NULL DEFAULT 'voiture',
+                distance_m REAL,
+                duration_sec REAL,
+                budget REAL,
                 FOREIGN KEY (day_id) REFERENCES travel_days(id) ON DELETE CASCADE
             );
 
@@ -225,8 +238,12 @@ def bulk_create_pois(destination_id, pois_list):
 # ── Travel CRUD ──────────────────────────────────────────────────────────────
 
 def save_travel(destination_id, days, transport_mode="voiture", nom=None):
-    """Crée un nouveau voyage (sans supprimer les existants). Retourne son id."""
+    """Crée un voyage (remplace le précédent pour la destination). Retourne son id.
+
+    Une destination a au plus 1 voyage (relation 1-1) : les anciens sont supprimés.
+    """
     with get_db() as conn:
+        conn.execute("DELETE FROM travels WHERE destination_id = ?", (destination_id,))
         cur = conn.execute(
             "INSERT INTO travels (destination_id, transport_mode, nom) VALUES (?, ?, ?)",
             (destination_id, transport_mode, nom),
@@ -235,13 +252,14 @@ def save_travel(destination_id, days, transport_mode="voiture", nom=None):
         for day in days:
             day_cur = conn.execute(
                 "INSERT INTO travel_days (travel_id, numero, hotel_nom, hotel_adresse, "
-                "hotel_latitude, hotel_longitude, restaurant_nom, restaurant_adresse, "
-                "restaurant_latitude, restaurant_longitude) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "hotel_latitude, hotel_longitude, hotel_budget, "
+                "restaurant_nom, restaurant_adresse, restaurant_latitude, restaurant_longitude, restaurant_budget) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (travel_id, day["numero"], day.get("hotel_nom"), day.get("hotel_adresse"),
-                 day.get("hotel_latitude"), day.get("hotel_longitude"),
+                 day.get("hotel_latitude"), day.get("hotel_longitude"), day.get("hotel_budget"),
                  day.get("restaurant_nom"), day.get("restaurant_adresse"),
-                 day.get("restaurant_latitude"), day.get("restaurant_longitude")),
+                 day.get("restaurant_latitude"), day.get("restaurant_longitude"),
+                 day.get("restaurant_budget")),
             )
             day_id = day_cur.lastrowid
             for poi_id in day.get("poi_ids", []):
@@ -252,12 +270,14 @@ def save_travel(destination_id, days, transport_mode="voiture", nom=None):
             for idx, seg in enumerate(day.get("segments", [])):
                 conn.execute(
                     "INSERT INTO segments (day_id, ordre, from_name, from_latitude, from_longitude, "
-                    "to_name, to_latitude, to_longitude, transport_mode) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    "to_name, to_latitude, to_longitude, transport_mode, "
+                    "distance_m, duration_sec, budget) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (day_id, idx,
                      seg.get("from_name"), seg.get("from_latitude"), seg.get("from_longitude"),
                      seg.get("to_name"), seg.get("to_latitude"), seg.get("to_longitude"),
-                     seg.get("transport_mode", transport_mode)),
+                     seg.get("transport_mode", transport_mode),
+                     seg.get("distance_m"), seg.get("duration_sec"), seg.get("budget")),
                 )
         return travel_id
 
@@ -315,9 +335,15 @@ def get_travel_by_id(travel_id):
         }
 
 
-def update_segment_mode(segment_id, transport_mode):
+def update_segment_mode(segment_id, transport_mode, distance_m=None, duration_sec=None):
     with get_db() as conn:
         conn.execute(
-            "UPDATE segments SET transport_mode = ? WHERE id = ?",
-            (transport_mode, segment_id),
+            "UPDATE segments SET transport_mode = ?, distance_m = ?, duration_sec = ? WHERE id = ?",
+            (transport_mode, distance_m, duration_sec, segment_id),
         )
+
+
+def get_segment(segment_id):
+    with get_db() as conn:
+        row = conn.execute("SELECT * FROM segments WHERE id = ?", (segment_id,)).fetchone()
+        return dict(row) if row else None

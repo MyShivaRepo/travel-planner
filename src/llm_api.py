@@ -32,12 +32,15 @@ SYSTEM_TRAVEL = (
     '"numero": int, '
     '"poi_noms": [str], '
     '"hotel_nom": str, "hotel_adresse": str, "hotel_latitude": float, "hotel_longitude": float, '
+    '"hotel_budget": float (euros/nuit), '
     '"restaurant_nom": str, "restaurant_adresse": str, "restaurant_latitude": float, "restaurant_longitude": float, '
+    '"restaurant_budget": float (euros/personne), '
     '"segments": [{'
     '"from_name": str, "from_latitude": float, "from_longitude": float, '
     '"to_name": str, "to_latitude": float, "to_longitude": float, '
     '"transport_mode": str (un de : "à pied", "en vélo", "voiture personnelle", '
-    '"voiture de location", "taxi", "bus", "métro", "train", "bateau", "avion")'
+    '"voiture de location", "taxi", "bus", "métro", "train", "bateau", "avion"), '
+    '"budget": float (coût estimé du segment en euros, 0 pour à pied/vélo)'
     '}]'
     '}]}'
 )
@@ -54,10 +57,10 @@ def _extract_json(text):
 
 def _anthropic_call(api_key, model, system, user_msg):
     import anthropic
-    client = anthropic.Anthropic(api_key=api_key)
+    client = anthropic.Anthropic(api_key=api_key, timeout=180.0)
     response = client.messages.create(
         model=model,
-        max_tokens=4096,
+        max_tokens=16384,
         system=system,
         messages=[{"role": "user", "content": user_msg}],
     )
@@ -87,9 +90,10 @@ def _anthropic_test(api_key, model):
 
 def _openai_call(api_key, model, system, user_msg):
     from openai import OpenAI
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(api_key=api_key, timeout=180.0)
     response = client.chat.completions.create(
         model=model,
+        max_tokens=16384,
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": user_msg},
@@ -262,12 +266,15 @@ def generate_travel(destination_nom, pois, provider=None, api_key=None, model=No
         f"Voici les sites à visiter :\n{pois_desc}\n\n"
         "Pour chaque jour, propose :\n"
         "- Les sites (poi_noms) à visiter ce jour-là (regroupe par proximité géographique)\n"
-        "- Un hôtel bien noté pour la nuit (hotel_nom, hotel_adresse, hotel_latitude, hotel_longitude)\n"
-        "- Un restaurant bien noté pour le dîner (restaurant_nom, restaurant_adresse, restaurant_latitude, restaurant_longitude)\n"
+        "- Un hôtel bien noté pour la nuit (hotel_nom, hotel_adresse, hotel_latitude, hotel_longitude, "
+        "hotel_budget = prix estimé par nuit en euros)\n"
+        "- Un restaurant bien noté pour le dîner (restaurant_nom, restaurant_adresse, restaurant_latitude, "
+        "restaurant_longitude, restaurant_budget = prix estimé par personne en euros)\n"
         "- Une liste ORDONNÉE de segments (segments) représentant les déplacements : "
         "hôtel matin → POI1 → POI2 → ... → restaurant → hôtel soir (ou hôtel suivant). "
         "Chaque segment a un from_name/from_latitude/from_longitude, un to_name/to_latitude/to_longitude, "
-        'et un transport_mode.\n\n'
+        "un transport_mode, et un budget estimé en euros "
+        "(0 pour à pied/vélo ; prix d'un billet/course pour transports ; prix estimé du carburant pour voiture).\n\n"
         "CHOIX DU MODE DE TRANSPORT (OBLIGATOIRE, basé sur la DISTANCE RÉELLE entre from et to) :\n"
         "- distance < 1.5 km : 'à pied' (PRÉFÉRENCE ABSOLUE pour toute courte distance urbaine)\n"
         "- 1.5 à 5 km en ville : 'à pied', 'en vélo' ou 'métro' selon contexte\n"
@@ -278,7 +285,7 @@ def generate_travel(destination_nom, pois, provider=None, api_key=None, model=No
         "RÈGLE CRITIQUE : pour un segment < 1.5 km, utilise TOUJOURS 'à pied'. "
         "Ne choisis JAMAIS 'train', 'métro', 'bus' ou 'voiture' pour un trajet de quelques centaines de mètres.\n\n"
         "IMPORTANT : les coordonnées GPS de l'hôtel, du restaurant et de chaque segment "
-        "sont OBLIGATOIRES. Ne jamais omettre ces champs.\n"
+        "sont OBLIGATOIRES. Les budgets sont OBLIGATOIRES. Ne jamais omettre ces champs.\n"
         "Optimise l'itinéraire pour minimiser les déplacements."
     )
     fb_p, fb_k, fb_m = _get_fallback()

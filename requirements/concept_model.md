@@ -23,7 +23,8 @@ Il est caractérisé par :
 - un `type` : Pays, Région, Ville
 
 Une `Destination` contient 1 ou plusieurs `POI(s)` associé(s) : relation 1-N.   
-Une `Destination` à 1 unique `Voyage` associé : relation 1-1.
+Une `Destination` contient 1 ou plusieurs `Activité(s)` associé(s) : relation 1-N.  
+Une `Destination` à 1 unique `Voyage` associé : relation 1-1. (Simplification)   
 
 ### POI (Point Of Interest)
 
@@ -31,20 +32,26 @@ Le 2nd concept est le concept de `POI` (Point Of Interest).
 Il est caractérisé par :   
 - un `rang` : ordre de priorité du site à visiter
 - un `nom` : le nom du site
-- un `type` : Nature, Architecture, Histoire, ...
+- un `type` : nature, architecture, histoire, ...
 - une `description`
 - une `latitude`
 - une `longitude`
 
-Un `POI` appartient à une seule `Destination` (relation N-1).
+Un `POI` appartient à une seule `Destination` : relation N-1.   
 
 ### Activité
 
 Le 3eme concept est le concept d'`Activité`
 Il est caractérisé par :   
-- un `rang` : ordre de priorité du site à visiter
-
-
+- un `rang` : ordre de priorité de l'activité à réaliser
+- un `nom` : nom de l'activité
+- un `type` : sport, culture, cuisine, ...
+- une `description`
+- une `latitude`
+- une `longitude`
+- 
+Une `Activité` appartient à une seule `Destination` : relation N-1.   
+  
 ## Les concepts qui incarnet la solution
 
 ### Voyage

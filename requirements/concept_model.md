@@ -27,18 +27,19 @@ Un `POI` appartient à une seule `Destination` (relation N-1).
 
 Le concept de `Voyage` représente la planification complète pour une `Destination` avec ses `POIs` associés.        
 Il est caractérisé par :   
-- une liste de `Segments`  
-- chaque `Segment` à un 1 point de départ et 1 point d'arrivée   
-- ces points peuvent être soit des `hotels`, soit des `POIs`   
-- chaque `Segment` a un `mode de transport` affecté : pied, vélo, voiture (personelle, location, taxi), bus, metro, train, bateau, avion.  
-
+- une liste de `Jours` (numérotés de 1 à N)
 
 ## Jour
 
-Le concept de `Jour` est utilisé dans la planification du voyage.   
-Une `Jour` contient un nombre fini de `Segment`, d'un `hotel` de départ à un `hotel` d'arrivée.   
+Le concept de `Jour` est utilisé pour la planification du voyage.   
+Un `Jour` contient un nombre fini de `Segment`, d'un `hotel` de départ à un `hotel` d'arrivée en passant par 0, 1 ou plusieurs `POI(s)`   
 Il est caractérisé par :   
 - un `numéro` : le numéro du jour dans le voyage (Jour 1, Jour 2, ...).    
 - une liste de `POIs` à visiter ce jour-là.   
 - un `hôtel` : nom, adresse et coordonnées GPS (latitude, longitude) de l'hôtel recommandé pour la nuit.      
 - un `restaurant` : nom, adresse et coordonnées GPS (latitude, longitude) du restaurant recommandé pour le dîner.     
+
+## Segment
+- chaque `Segment` à un 1 point de départ et 1 point d'arrivée   
+- ces points peuvent être soit des `hotels`, soit des `POIs`   
+- chaque `Segment` a un `mode de transport` affecté : pied, vélo, voiture (personelle, location, taxi), bus, metro, train, bateau, avion.  

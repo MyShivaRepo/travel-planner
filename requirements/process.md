@@ -41,6 +41,7 @@ Dans l'onglet `Destination`, sous-onglet "Activités", le Système présente les
 - Description
 - Latitude
 - Longitude
+- Fournisseur (lien hypertexte)
 
 L'Utilisateur peut :
 - Modifier manuellement une `Activité` existante

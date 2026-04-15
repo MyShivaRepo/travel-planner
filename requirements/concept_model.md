@@ -1,6 +1,7 @@
 # Modèle de concepts
 
-Le modèle de concepts s'articule autour de 3 concepts qui incarnent le `besoin` (les exigences du voyage) et de 3 concepts qui incarnent la `solution` (la planification du voyage).
+Le modèle de concepts s'articule autour de 3 concepts qui incarnent le `besoin` (les exigences du voyage) ...    
+... et de 3 concepts qui incarnent la `solution` (la planification du voyage).
 
 Les concepts `besoin` sont :
 - La `Destination`

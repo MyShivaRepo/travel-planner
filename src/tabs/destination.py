@@ -83,7 +83,7 @@ def _render_table(dest_id, dest, pois, api_key, provider):
     else:
         # Tri par clic sur en-tête
         HEADERS = [
-            ("Rang", "rang", 0.5), ("Nom", "nom", 2), ("Type", "type", 1.5),
+            ("#", "rang", 0.5), ("Nom", "nom", 2), ("Type", "type", 1.5),
             ("Description", "description", 3), ("Lat.", "latitude", 1), ("Lon.", "longitude", 1),
         ]
         if "sort_key" not in st.session_state:

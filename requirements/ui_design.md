@@ -115,12 +115,15 @@ Cet onglet contient deux sous-onglets :
 Affichage jour par jour (via des `expanders` dépliés par défaut).
 Pour chaque `Jour` :
 - Affichage sur la même ligne : n° du jour, distance, durée, budget
-- Affichage en dessous de trois sections qui s'affichent dans l'ordre suivant :
+- Affichage en dessous de quatre sections qui s'affichent dans l'ordre suivant :
 
-**1. Liste des sites à visiter** *(classés par leur Rang)*
-- Liste des POI du jour au format : `<Nom> (rang <N>)`
+**1. Liste des POIs à visiter** *(classés par leur Rang)*
+- Liste des `POI(s)` du jour au format : `<Nom> (rang <N>)`
 
-**2. Liste des segments**   
+**2. Liste des Activités à réaliser** *(classées par leur Rang)*
+- Liste des `Activité(s)` du jour au format : `<Nom> (rang <N>)`
+
+**3. Liste des segments**   
 Affichage dans un tableau
 - `<From> > <To>`
 - `mode de transport`
@@ -128,7 +131,7 @@ Affichage dans un tableau
 - `durée`
 - `budget`
 
-**3. Logistique du soir**
+**4. Logistique du soir**
 - **Hôtel** : nom et adresse de l'hôtel recommandé pour la nuit
 - **Restaurant** : nom et adresse du restaurant recommandé pour le dîner
 
@@ -141,7 +144,7 @@ Affichage sur une carte géographique du parcours complet de chaque journée. Ch
 - **avion** : tracé en grand cercle (great-circle) calculé localement, avec distance et durée estimées à partir d'une vitesse moyenne de vol
 - **bateau** : ligne droite pointillée (pas de routage maritime)
 
-Les tooltips au survol d'un segment affichent : `From "<label_départ>" to "<label_arrivée>" : <mode> (distance, durée)` où les labels sont `Jn` pour un hôtel du jour N, `POIx` pour un POI de rang x, et `Resto Jn` pour un restaurant du jour N.
+Les tooltips au survol d'un segment affichent : `From "<label_départ>" to "<label_arrivée>" : <mode> (distance, durée)` où les labels sont `Jn` pour un hôtel du jour N, `POIx` pour un POI de rang x, `Actx` pour une Activité de rang x, et `Resto Jn` pour un restaurant du jour N.
 
 Les marqueurs sur la carte :
 - Les `hôtels` : marqueurs bleus avec l'icône "lit"

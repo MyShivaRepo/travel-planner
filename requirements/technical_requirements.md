@@ -81,10 +81,14 @@ Le routage est effectué segment par segment : si un segment échoue, seul celui
 ## Persistance
 
 Les données suivantes sont persistées en base SQLite :
-- Destinations et POI
-- Voyages
-- Jours de voyage (incluant hôtel avec GPS, restaurant avec GPS)
-- Segments (avec points de départ/arrivée, coordonnées GPS, et mode de transport par segment)
+- Destinations
+- POI (rattachés à une Destination)
+- Activités (rattachées à une Destination)
+- Voyages (1 par Destination)
+- Jours de voyage
+- Hôtels (rattachés à un Jour : nom, adresse, coordonnées GPS, budget)
+- Restaurants (rattachés à un Jour : nom, adresse, coordonnées GPS, budget)
+- Segments (points de départ/arrivée avec coordonnées GPS, mode de transport, distance, durée, budget)
 - Clés API (LLM principal, LLM de secours, OpenRouteService, Google Maps)
 - Préférence du LLM principal et du LLM de secours
 

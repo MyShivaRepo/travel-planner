@@ -7,6 +7,16 @@ Le `container` Docker est accessible à l'adresse http://localhost:9999.
 Les données de l'application (destinations, POI, voyages, segments, clés API) doivent être rendues pérennes via un `volume` Docker.
 Les modifications de l'interface utilisateur ne doivent pas impacter les données de l'application.
 
+## Configuration des API
+
+Dans l'onglet `Settings`, l'utilisateur configure au moins une clé API d'un fournisseur de LLM (Anthropic, OpenAI, Google).
+Optionnellement, il peut configurer :
+- Un LLM de secours (fallback) utilisé automatiquement en cas d'échec du LLM principal.
+- Une clé OpenRouteService pour afficher les vrais tracés routiers sur les cartes du voyage.
+- Une clé Google Maps Directions pour afficher les vrais tracés des transports publics (métro, train, bus).
+
+Toutes les clés API sont persistées en base de données afin d'être préservées entre les redémarrages du container.
+
 ## Migration de schéma de base de données
 
 Toute évolution du schéma de la base de données doit être non destructive :
@@ -36,24 +46,37 @@ En cas d'erreur :
 - Si un LLM de secours est configuré, l'application tente automatiquement de basculer sur celui-ci
 - Sinon, un message d'erreur explicite est affiché à l'utilisateur
 
-## API de routage
+## APIs de routage
 
-L'application peut utiliser OpenRouteService (ORS) pour calculer les vrais tracés routiers sur les cartes du voyage.
+### OpenRouteService (ORS)
 
-Modes supportés par ORS (routage réel) :
+Modes supportés (routage réel) :
 - à pied
 - en vélo
 - voiture personnelle, voiture de location, taxi (tous mappés sur `driving-car`)
 - bus (mappé sur `driving-car` car ORS n'a pas de profil bus)
 
-Modes non supportés par ORS (affichage en lignes droites) :
+Le paramètre `radiuses: [-1]` est utilisé pour permettre à ORS de chercher le point routable le plus proche sans limite de rayon (utile pour les POI en montagne, forêt, etc. qui ne sont pas sur une route).
+
+### Google Maps Directions
+
+Modes supportés (routage transit avec horaires réels) :
 - métro
 - train
-- bateau
+- bus
+
+Décodage local du polyline encodé retourné par l'API.
+
+### Great-circle (calcul local, sans API)
+
+Mode supporté :
 - avion
 
+Calcul basé sur la formule de Haversine pour la distance et interpolation sphérique pour le tracé. La durée est estimée à partir d'une vitesse de croisière moyenne de 800 km/h.
+
+### Dispatch et fallback
+
 Le routage est effectué segment par segment : si un segment échoue, seul celui-ci est affiché en ligne droite, les autres restent en tracé réel.
-Le paramètre `radiuses: [-1]` est utilisé pour permettre à ORS de chercher le point routable le plus proche sans limite de rayon (utile pour les POI en montagne, forêt, etc. qui ne sont pas sur une route).
 
 ## Persistance
 
@@ -62,7 +85,7 @@ Les données suivantes sont persistées en base SQLite :
 - Voyages (1 destination peut avoir plusieurs voyages, chacun avec date de création)
 - Jours de voyage (incluant hôtel avec GPS, restaurant avec GPS)
 - Segments (avec points de départ/arrivée, coordonnées GPS, et mode de transport par segment)
-- Clés API (LLM principal, LLM de secours, OpenRouteService)
+- Clés API (LLM principal, LLM de secours, OpenRouteService, Google Maps)
 - Préférence du LLM principal et du LLM de secours
 
 ## Modes de transport par segment

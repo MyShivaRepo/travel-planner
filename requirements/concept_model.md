@@ -32,7 +32,7 @@ Il est caractérisé par :
 ## Jour
 
 Le concept de `Jour` est utilisé pour la planification du voyage.   
-Un `Jour` contient un nombre fini de `Segment`, d'un `hotel` de départ à un `hotel` d'arrivée en passant par 0, 1 ou plusieurs `POI(s)`   
+Un `Jour` contient un nombre fini de `Segment`, qui incarne le trajet d'un `hotel` de départ à un `hotel` d'arrivée en passant par 0, 1 ou plusieurs `POI(s)`   
 Il est caractérisé par :   
 - un `numéro` : le numéro du jour dans le voyage (Jour 1, Jour 2, ...).    
 - une liste de `POIs` à visiter ce jour-là.   

@@ -58,7 +58,7 @@ Une `Activité` est possiblement réalisable en différents lieux (couple `latit
 
 ### Voyage
 
-Le 1er concept est le concept de `Voyage`.
+Le 1er concept est le concept de `Voyage`.   
 Il représente la planification complète pour une `Destination` avec ses `POI(s)` et `Activité(s)`associés.        
 Il est caractérisé par :   
 - une liste de `Jours` (numérotés de 1 à N)

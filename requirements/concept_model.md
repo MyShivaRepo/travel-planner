@@ -12,8 +12,8 @@ Les concepts `solution` sont :
 - Le `Voyage`
 - Le `Jour`
 - Le `Segment`
-- L' `Hotel `
-- Le  `Restaurant `
+- L'`Hôtel `
+- Le `Restaurant `
 
 ## Les concepts qui incarnent le `besoin`
 
@@ -40,7 +40,7 @@ Il est caractérisé par :
 - une `longitude`
 
 Un `POI` appartient à une seule `Destination` : relation N-1.   
-Un `POI` a une `latitude` et une `longitude` strictement déterminé.
+Un `POI` a une `latitude` et une `longitude` strictement déterminées.
 
 ### Activité
 
@@ -76,19 +76,19 @@ Il est caractérisé par :
 - une liste d'`Activité(s)` à réaliser ce jour-là.   
 - un `Hôtel` recommandé pour la nuit.      
 - un `Restaurant` recommandé pour le dîner.     
-Chaque `Jour` est caractérisé en outre par la somme des `distances` et `durées` de chaque `Segment` et par la somme du `budget` de chaque `Segment`, `Hotel` et `Restaurant`.
+Chaque `Jour` est caractérisé en outre par la somme des `distances` et `durées` de chaque `Segment` et par la somme du `budget` de chaque `Segment`, `Hôtel` et `Restaurant`.
 
 ### Segment
 Chaque `Segment` a un 1 point de départ et 1 point d'arrivée   
-- ces points peuvent être soit des `Hotels`, soit des `POI(s)`, soit des `Activité(s)`  (Pas les `Restaurants`)
-Chaque `Segment` a un `mode de transport` affecté : pied, vélo, voiture (personnelle, location, taxi), bus, metro, train, bateau, avion.  
+- ces points peuvent être soit des `Hôtels`, soit des `POI(s)`, soit des `Activité(s)`  (Pas les `Restaurants`)
+Chaque `Segment` a un `mode de transport` affecté : pied, vélo, voiture (personnelle, location, taxi), bus, métro, train, bateau, avion.  
 Chaque `Segment` est caractérisé par :
 - Une `distance` (en km)
 - Une `durée` (en heure)
 - Un `budget` (en Euro)
 
-### Hotel
-Chaque `Hotel` est caractérisé par :   
+### Hôtel
+Chaque `Hôtel` est caractérisé par :   
 - `nom`
 - `adresse`
 - `coordonnées GPS` (`latitude`, `longitude`)

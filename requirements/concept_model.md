@@ -17,10 +17,10 @@ Les concepts `solution` sont :
 
 ### Destination
 
-Le 1er concept est le concept de `Destination`.   
-Il est caractérisé par :   
-- un `nom` : le nom de la destination (ex: "Italie", "Toscane", "Rome")
-- un `type` : Pays, Région, Ville
+Le 1er concept est le concept de `Destination`.    
+Il est caractérisé par :    
+- un `nom` : le nom de la destination (ex: "Italie", "Toscane", "Rome")    
+- un `type` : Pays, Région, Ville  
 
 Une `Destination` contient 1 ou plusieurs `POI(s)` associé(s) : relation 1-N.   
 Une `Destination` contient 1 ou plusieurs `Activité(s)` associée(s) : relation 1-N.  
@@ -28,7 +28,7 @@ Une `Destination` à 1 unique `Voyage` associé : relation 1-1. (Simplification)
 
 ### POI (Point Of Interest)
 
-Le 2nd concept est le concept de `POI` (Point Of Interest).
+Le 2nd concept est le concept de `POI` (Point Of Interest).   
 Il est caractérisé par :   
 - un `rang` : ordre de priorité du site à visiter
 - un `nom` : le nom du site
@@ -42,7 +42,7 @@ Un `POI` à une `latitude` et une `longitude` strictement déterminé.
 
 ### Activité
 
-Le 3eme concept est le concept d'`Activité`
+Le 3eme concept est le concept d'`Activité`.   
 Il est caractérisé par :   
 - un `rang` : ordre de priorité de l'activité à réaliser
 - un `nom` : nom de l'activité
@@ -54,11 +54,12 @@ Il est caractérisé par :
 Une `Activité` appartient à une seule `Destination` : relation N-1. 
 Une `Activité` est possiblement réalisable en différents lieux (couple `latitude` et `longitude`)
   
-## Les concepts qui incarnet la solution
+## Les concepts qui incarnent la `solution`
 
 ### Voyage
 
-Le concept de `Voyage` représente la planification complète pour une `Destination` avec ses `POIs` associés.        
+Le 1er concept est le concept de `Voyage`.
+Il représente la planification complète pour une `Destination` avec ses `POI(s)` et `Activité(s)`associés.        
 Il est caractérisé par :   
 - une liste de `Jours` (numérotés de 1 à N)
 

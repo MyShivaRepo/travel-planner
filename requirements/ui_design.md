@@ -147,6 +147,7 @@ Les marqueurs sur la carte :
 - Les `hôtels` : marqueurs bleus avec l'icône "lit"
 - Les `restaurants` : marqueurs verts avec l'icône "fourchette"
 - Les `POIs` : marqueurs rouges circulaires avec le numéro de rang à l'intérieur
-
+- Les `Activités` : marqueurs orange circulaires avec le numéro de rang à l'intérieur
+  
 La distance totale et la durée cumulée (pour les segments routables) sont affichées au-dessus de la carte.
 La carte occupe toute la hauteur disponible du navigateur.

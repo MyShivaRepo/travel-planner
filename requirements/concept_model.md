@@ -14,7 +14,7 @@ Les concepts `solution` sont :
 - Le `Segment`
 
   
-## Destination
+### Destination
 
 Le 1er concept clef est le concept de `Destination`.   
 Il est caractérisé par :   

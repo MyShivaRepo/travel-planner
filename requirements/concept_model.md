@@ -40,6 +40,10 @@ Il est caractérisé par :
 - un `restaurant` : nom, adresse et coordonnées GPS (latitude, longitude) du restaurant recommandé pour le dîner.     
 
 ## Segment
-- chaque `Segment` à un 1 point de départ et 1 point d'arrivée   
+Chaque `Segment` à un 1 point de départ et 1 point d'arrivée   
 - ces points peuvent être soit des `hotels`, soit des `POIs`   
-- chaque `Segment` a un `mode de transport` affecté : pied, vélo, voiture (personelle, location, taxi), bus, metro, train, bateau, avion.  
+Chaque `Segment` a un `mode de transport` affecté : pied, vélo, voiture (personelle, location, taxi), bus, metro, train, bateau, avion.  
+Chaque `Segment` est caratérisé par :
+- Une `distance` (en km)
+- Une `durée` (en heure)
+- Un `budget` (en Euro)

@@ -7,8 +7,8 @@ Il est caractérisé par :
 - un `nom` : le nom de la destination (ex: "Italie", "Toscane", "Rome")
 - un `type` : Pays, Région, Ville
 
-Une `Destination` contient 1 ou plusieurs `POI(s)` (relation 1-N).   
-Une `Destination` peut avoir 1 ou plusieurs `Voyage(s)` associé (relation 1-1).
+Une `Destination` contient 1 ou plusieurs `POI(s)` associé(s) : relation 1-N.   
+Une `Destination` à 1 unique `Voyage` associé : relation 1-1.
 
 ## POI (Point Of Interest)
 

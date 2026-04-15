@@ -39,17 +39,19 @@ Boutons `Enregistrer` et `Tester`.
 Permet de saisir une nouvelle `Destination` :
 - Champ `Nom` : le nom de la destination
 - Champ `Type` : Pays, Région ou Ville (liste déroulante)
-- Champ `Nombre de POI` : le nombre de sites à découvrir
-- Un `bouton` nommé `Rechercher` lance la génération des POI via l'API du LLM
+- Curseur `Nombre de POIs` : le nombre de sites à découvrir
+- Curseur `Nombre d'activités` : le nombre d'activité à réaliser
+- Un `bouton` nommé `Rechercher` lance la génération des `POI(s)` et des `Activité(s)` via l'API du LLM
 
 Les différentes `Destinations` déjà enregistrées sont présentées dans un tableau avec les colonnes :
 - Nom
 - Type
-- Nombre de POI
+- Nombre de POIs
+- Nombre d'activités
 
 Dans la dernière colonne du tableau :
-- un `bouton` nommé `Visualiser` permet d'accéder à la liste des `POI` pour cette `Destination` (bascule vers l'onglet `Destination`)
-- un `bouton` nommé `Supprimer` permet de supprimer cette `Destination` et tous ses `POI` associés
+- un `bouton` nommé `Visualiser` permet d'accéder à l'onglet `Destination`)
+- un `bouton` nommé `Supprimer` permet de supprimer cette `Destination` (et tous ses `POI(s)` et `Activité(s)` associés)
 
 ## Onglet `Destination`
 

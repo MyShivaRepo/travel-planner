@@ -23,7 +23,7 @@ Il est caractérisé par :
 - un `type` : Pays, Région, Ville
 
 Une `Destination` contient 1 ou plusieurs `POI(s)` associé(s) : relation 1-N.   
-Une `Destination` contient 1 ou plusieurs `Activité(s)` associé(s) : relation 1-N.  
+Une `Destination` contient 1 ou plusieurs `Activité(s)` associée(s) : relation 1-N.  
 Une `Destination` à 1 unique `Voyage` associé : relation 1-1. (Simplification)   
 
 ### POI (Point Of Interest)

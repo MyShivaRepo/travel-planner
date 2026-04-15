@@ -103,8 +103,10 @@ Affichage jour par jour (via des `expanders` dépliés par défaut). Pour chaque
 **2. Liste des segments**
 Affichage dans un tableau
 - `<From> > <To>`
-- 
-
+- `mode de transport`
+- `distance`
+- `durée`
+- `budget`
 
 **3. Logistique du soir**
 - **Hôtel** : nom et adresse de l'hôtel recommandé pour la nuit

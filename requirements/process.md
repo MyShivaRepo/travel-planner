@@ -15,9 +15,9 @@ Le nombre de `POI(s)` générés correspond au nombre indiqué par l'utilisateur
 
 ## 3. Génération des Activités
 
-Le Système interroge l'API du LLM pour déterminer les `Activités` caratéristiques de cette `Destination`.    
+Le Système interroge l'API du LLM pour déterminer les `Activités` caractéristiques de cette `Destination`.    
 Le nombre d'`Activité(s)` générés correspond au nombre indiqué par l'utilisateur.   
-Le Système proprose une localisation précise pour réaliser chaque `Activité`.   
+Le Système propose une localisation précise pour réaliser chaque `Activité`.   
 
 ## 4. Visualisation et modification des POIs et des Activités
 
@@ -54,7 +54,7 @@ Le Système positionne par ailleurs (sous-onglet "carte") les `POIs` et les `Act
 Lorsque l'Utilisateur clique sur le bouton `Générer le voyage`, le système interroge l'API du LLM pour générer une proposition de voyage jour par jour.
 
 Pour chaque `Jour`, le LLM propose :
-- Quel(s) site(s) (`POI(s)`) visiter et quelle `Activité(s)` à réaliser (regroupés par proximité géographique)
+- Quel(s) site(s) (`POI(s)`) visiter et quelle(s) `Activité(s)` à réaliser (regroupés par proximité géographique)
 - Dans quel hôtel séjourner le soir (nom, adresse, coordonnées GPS)
 - Dans quel restaurant (bien noté) se restaurer le soir (nom, adresse, coordonnées GPS)
 - La liste ordonnée des `Segments` de la journée (hôtel du matin → `POI(s)` et/ou `Activité(s)` → hôtel du soir)

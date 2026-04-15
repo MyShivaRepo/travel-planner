@@ -8,30 +8,30 @@ Permet de configurer les API utilisées par l'application.
 
 ### LLM Principal
 
-Permet de configurer un fournisseur principal de LLM (Large Language Model).   
+Permet de configurer un fournisseur principal de LLM (Large Language Model).
 
-Un champ `Fournisseur` permet de sélectionner un fournisseur (Anthropic/Claude, OpenAI/ChatGPT, Google/Gemini, ...).   
-Un champ `API Key` permet de saisir la clef.   
-Un bouton `Enregistrer` permet la sauvegarde de la clef en base de données.   
-Un bouton `Tester` permet de vérifier que la clef est valide.   
-Une zone de messages permet de confirmer la connection ou d'afficher un message d'erreur à l'utilisateur.   
+Un champ `Fournisseur` permet de sélectionner un fournisseur (Anthropic/Claude, OpenAI/ChatGPT, Google/Gemini, ...).
+Un champ `API Key` permet de saisir la clef.
+Un bouton `Enregistrer` permet la sauvegarde de la clef en base de données.
+Un bouton `Tester` permet de vérifier que la clef est valide.
+Une zone de messages permet de confirmer la connection ou d'afficher un message d'erreur à l'utilisateur.
 
 ### LLM de Secours (fallback)
 
-Permet de configurer un LLM de secours utilisé automatiquement si le LLM principal est indisponible (surcharge, timeout, erreur réseau).   
+Permet de configurer un LLM de secours utilisé automatiquement si le LLM principal est indisponible (surcharge, timeout, erreur réseau).
 
-Champs, boutons et zone de messages identique au LLM principal.
+Champs, boutons et zone de messages identiques au LLM principal.
 
 ### API de Routage (OpenRouteService)
 
-Clé API optionnelle d'OpenRouteService pour calculer les vrais tracés routiers sur la carte du voyage.
+Clé API optionnelle d'OpenRouteService pour calculer les vrais tracés routiers sur la carte du voyage pour les modes de transport compatibles (à pied, vélo, voiture, taxi, bus).
 Si la clé n'est pas fournie, la carte affiche des lignes droites entre les points.
 Boutons `Enregistrer` et `Tester`.
 
 ### API Google Maps Directions
 
-Clé API optionnelle de Google Maps Directions pour calculer les vrais tracés ferroviaire et maritime sur la carte du voyage.
-Si la clé n'est pas fournie, la carte affiche des lignes droites entre les points.
+Clé API optionnelle de Google Maps Directions pour calculer les vrais tracés des transports publics (métro, train, bus) sur la carte du voyage, avec horaires et durées réels.
+Si la clé n'est pas fournie, la carte affiche des lignes droites pour les segments en métro ou en train.
 Boutons `Enregistrer` et `Tester`.
 
 ## Onglet `Where to Go`
@@ -87,31 +87,36 @@ La carte occupe toute la hauteur disponible du navigateur.
 
 ## Onglet `Travel`
 
-Permet de visualiser les voyages planifiés pour la destination sélectionnée.
+Permet de visualiser le **dernier voyage généré** pour la destination sélectionnée.
 
-En haut de l'onglet :
-- Une liste déroulante (`selectbox`) permettant de choisir parmi les voyages existants pour cette destination (triés du plus récent au plus ancien)
-- Un `bouton` nommé `Supprimer` pour supprimer le voyage sélectionné
-- Les informations du voyage sélectionné : nom de la destination, nombre de jours
+En haut de l'onglet : nom de la destination, son type, et le nombre de jours du voyage.
 
 Cet onglet contient deux sous-onglets :
 
 ### Sous-onglet `Tableau`
 
-Affichage jour par jour (expanders). Pour chaque `Jour` :
-- Les `POI` à visiter (rang, nom, type, description)
-- L'hôtel (nom, adresse)
-- Le restaurant (nom, adresse)
-- La liste ordonnée des `Segments` de la journée, chaque segment affichant :
-  - Le point de départ et d'arrivée (noms)
-  - Une liste déroulante permettant de changer son `mode de transport` (modification sauvegardée immédiatement)
+Affichage jour par jour (via des `expanders` dépliés par défaut). Pour chaque `Jour`, trois sections s'affichent dans l'ordre suivant :
+
+**1. Liste des sites à visiter** *(classés par leur Rang)*
+- Liste des POI du jour au format : `<Nom> (rang <N>)`
+
+**2. Liste des segments**
+- Chaque segment affiche le point de départ et d'arrivée au format : `<From> > <To> :` suivi d'une liste déroulante permettant de changer son `mode de transport` (modification sauvegardée immédiatement en base de données)
+
+**3. Logistique du soir**
+- **Hôtel** : nom et adresse de l'hôtel recommandé pour la nuit
+- **Restaurant** : nom et adresse du restaurant recommandé pour le dîner
 
 ### Sous-onglet `Carte`
 
-Affichage sur une carte géographique du parcours complet de chaque journée :
-- Chaque segment est tracé avec la couleur correspondant à son jour
-- Si la clé OpenRouteService est configurée et le mode de transport du segment est compatible (à pied, vélo, voiture personnelle, voiture de location, taxi, bus) : le vrai tracé routier est affiché, avec la distance et la durée réelles dans le tooltip
-- Sinon (modes non supportés par ORS : métro, train, bateau, avion, ou clé ORS absente) : des lignes droites pointillées sont affichées
+Affichage sur une carte géographique du parcours complet de chaque journée. Chaque segment est tracé avec la couleur correspondant à son jour, selon le mode de transport et les clés API configurées :
+
+- **à pied, en vélo, voiture (personnelle/location), taxi, bus** : si la clé OpenRouteService est configurée → vrai tracé routier ; sinon → ligne droite pointillée
+- **métro, train** : si la clé Google Maps est configurée → vrai tracé transit avec horaires ; sinon fallback sur ORS (tracé routier approximatif) ; sinon ligne droite pointillée
+- **avion** : tracé en grand cercle (great-circle) calculé localement, avec distance et durée estimées à partir d'une vitesse moyenne de vol
+- **bateau** : ligne droite pointillée (pas de routage maritime)
+
+Les tooltips au survol d'un segment affichent : `From "<label_départ>" to "<label_arrivée>" : <mode> (distance, durée)` où les labels sont `Jn` pour un hôtel du jour N, `POIx` pour un POI de rang x, et `Resto Jn` pour un restaurant du jour N.
 
 Les marqueurs sur la carte :
 - Les `hôtels` : marqueurs bleus avec l'icône "lit"

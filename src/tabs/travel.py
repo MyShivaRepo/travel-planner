@@ -4,6 +4,36 @@ import folium
 
 import database as db
 from routing import get_route, format_duration, format_distance
+from google_routing import get_transit_route, great_circle_route
+
+
+# Modes routés par Google Maps Directions (transit)
+TRANSIT_MODES = {"métro", "train"}
+
+# Modes routés en great-circle (avion)
+PLANE_MODES = {"avion"}
+
+# Modes pour lesquels on laisse une ligne droite pointillée
+STRAIGHT_LINE_MODES = {"bateau"}
+
+
+def _get_segment_route(mode, coords, ors_key, gmaps_key):
+    """Dispatche le calcul de route selon le mode de transport."""
+    if mode in PLANE_MODES:
+        return great_circle_route(coords), "great-circle"
+    if mode in TRANSIT_MODES and gmaps_key:
+        result = get_transit_route(coords, mode, gmaps_key)
+        if result:
+            return result, "transit"
+        # Fallback ORS driving si Google Maps échoue
+        if ors_key:
+            return get_route(coords, mode, ors_key), "ors-fallback"
+        return None, None
+    if mode in STRAIGHT_LINE_MODES:
+        return None, None
+    if ors_key:
+        return get_route(coords, mode, ors_key), "ors"
+    return None, None
 
 TRANSPORT_MODES = ["à pied", "en vélo", "voiture", "train", "bus", "bateau"]
 
@@ -23,7 +53,7 @@ def render():
         st.warning("Destination introuvable.")
         return
 
-    # ── Liste des voyages pour cette destination ────────────────────────────
+    # ── Chargement du voyage le plus récent ─────────────────────────────────
     travels_list = db.list_travels(dest_id)
     if not travels_list:
         st.info(
@@ -32,50 +62,15 @@ def render():
         )
         return
 
-    # Déterminer le voyage sélectionné
-    selected_id = st.session_state.get("selected_travel_id")
-    ids = [t["id"] for t in travels_list]
-    if selected_id not in ids:
-        selected_id = ids[0]  # plus récent
-        st.session_state["selected_travel_id"] = selected_id
-
-    # ── Sélecteur de voyage + actions ────────────────────────────────────────
-    def _label(t):
-        date = (t.get("created_at") or "")[:16].replace("T", " ")
-        base = t.get("nom") or f"Voyage #{t['id']}"
-        return f"{base} — {t['transport_mode']} — {date}"
-
-    col_sel, col_del = st.columns([5, 1])
-    with col_sel:
-        choice = st.selectbox(
-            "Voyage",
-            travels_list,
-            index=ids.index(selected_id),
-            format_func=_label,
-            key="travel_selector",
-            label_visibility="collapsed",
-        )
-        if choice["id"] != selected_id:
-            st.session_state["selected_travel_id"] = choice["id"]
-            st.rerun()
-    with col_del:
-        if st.button("Supprimer", key="del_travel"):
-            db.delete_travel(selected_id)
-            st.session_state.pop("selected_travel_id", None)
-            st.rerun()
-
-    # ── Chargement du voyage sélectionné ────────────────────────────────────
-    travel = db.get_travel_by_id(selected_id)
+    travel = db.get_travel_by_id(travels_list[0]["id"])
     if not travel:
         st.warning("Voyage introuvable.")
         return
 
     days = travel["days"]
-    transport_mode = travel["transport_mode"]
 
     st.markdown(
-        f"**{dest['nom']}** ({dest['type']}) — {len(days)} jours — "
-        f"Mode préféré : *{transport_mode}*"
+        f"**{dest['nom']}** ({dest['type']}) — {len(days)} jours"
     )
 
     sub_tab_table, sub_tab_map = st.tabs(["Tableau", "Carte"])
@@ -90,34 +85,24 @@ def render():
 def _render_table(days):
     for day in days:
         with st.expander(f"Jour {day['numero']}", expanded=True):
+            # 1. Liste des sites à visiter (classés par rang)
+            st.markdown("**Liste des sites à visiter** *(classés par leur Rang)*")
             if day["pois"]:
-                st.markdown("**Sites à visiter :**")
-                for poi in day["pois"]:
-                    st.markdown(f"- {poi['rang']}. **{poi['nom']}** ({poi['type']}) — {poi['description'] or ''}")
+                sorted_pois = sorted(day["pois"], key=lambda p: p.get("rang", 999))
+                for poi in sorted_pois:
+                    st.markdown(f"- {poi['nom']} (rang {poi['rang']})")
             else:
                 st.markdown("*Aucun site prévu ce jour.*")
 
-            col_hotel, col_resto = st.columns(2)
-            with col_hotel:
-                st.markdown("**Hôtel**")
-                st.markdown(f"{day.get('hotel_nom', 'Non défini')}")
-                if day.get("hotel_adresse"):
-                    st.caption(day["hotel_adresse"])
-            with col_resto:
-                st.markdown("**Restaurant**")
-                st.markdown(f"{day.get('restaurant_nom', 'Non défini')}")
-                if day.get("restaurant_adresse"):
-                    st.caption(day["restaurant_adresse"])
-
-            # ── Segments ─────────────────────────────────────────────────────
+            # 2. Liste des segments
             segments = day.get("segments", [])
             if segments:
-                st.markdown("**Trajets (segments) :**")
+                st.markdown("**Liste des segments**")
                 for seg in segments:
-                    c1, c2 = st.columns([4, 2])
+                    c1, c2 = st.columns([5, 2])
                     with c1:
                         st.markdown(
-                            f"- **{seg['from_name']}** → **{seg['to_name']}**"
+                            f"- {seg['from_name']} > {seg['to_name']} :"
                         )
                     with c2:
                         current_mode = seg.get("transport_mode", "voiture")
@@ -132,6 +117,17 @@ def _render_table(days):
                         if new_mode != current_mode:
                             db.update_segment_mode(seg["id"], new_mode)
                             st.rerun()
+
+            # 3. Logistique du soir
+            st.markdown("**Logistique du soir**")
+            hotel_line = f"- **Hôtel** : {day.get('hotel_nom', 'Non défini')}"
+            if day.get("hotel_adresse"):
+                hotel_line += f" — {day['hotel_adresse']}"
+            st.markdown(hotel_line)
+            resto_line = f"- **Restaurant** : {day.get('restaurant_nom', 'Non défini')}"
+            if day.get("restaurant_adresse"):
+                resto_line += f" — {day['restaurant_adresse']}"
+            st.markdown(resto_line)
 
 
 def _render_map(days):
@@ -159,11 +155,25 @@ def _render_map(days):
 
     m = folium.Map(location=[center_lat, center_lon], zoom_start=zoom)
 
+    # Construire le dictionnaire : nom du point → label court (Jn / POIx / Resto Jn)
+    name_to_label = {}
+    for day in days:
+        n = day["numero"]
+        if day.get("hotel_nom"):
+            name_to_label[day["hotel_nom"]] = f"J{n}"
+        if day.get("restaurant_nom"):
+            name_to_label[day["restaurant_nom"]] = f"Resto J{n}"
+        for poi in day.get("pois", []):
+            name_to_label[poi["nom"]] = f"POI{poi['rang']}"
+
+    def _label(name):
+        return name_to_label.get(name, name)
+
     ors_key = st.session_state.get("ors_api_key", "")
+    gmaps_key = st.session_state.get("gmaps_api_key", "")
     total_duration = 0
     total_distance = 0
     use_real_routing = False
-    has_unsupported_mode = False
 
     # Tracer chaque segment selon SON mode de transport
     for i, day in enumerate(days):
@@ -177,16 +187,19 @@ def _render_map(days):
                           (seg["to_latitude"], seg["to_longitude"])]
             seg_mode = seg.get("transport_mode", "voiture")
 
-            route_data = get_route(seg_coords, seg_mode, ors_key) if ors_key else None
+            from_label = _label(seg["from_name"])
+            to_label = _label(seg["to_name"])
+
+            route_data, source = _get_segment_route(seg_mode, seg_coords, ors_key, gmaps_key)
 
             if route_data:
                 use_real_routing = True
                 total_duration += route_data["duration"]
                 total_distance += route_data["distance"]
                 tooltip = (
-                    f"J{day['numero']} : {seg['from_name']} → {seg['to_name']} — "
-                    f"{seg_mode} — {format_distance(route_data['distance'])}, "
-                    f"{format_duration(route_data['duration'])}"
+                    f'From "{from_label}" to "{to_label}" : {seg_mode} '
+                    f"({format_distance(route_data['distance'])}, "
+                    f"{format_duration(route_data['duration'])})"
                 )
                 folium.PolyLine(
                     route_data["geometry"],
@@ -196,15 +209,13 @@ def _render_map(days):
                     tooltip=tooltip,
                 ).add_to(m)
             else:
-                if seg_mode in ("train", "bateau"):
-                    has_unsupported_mode = True
                 folium.PolyLine(
                     seg_coords,
                     color=day_color,
                     weight=3,
                     opacity=0.6,
                     dash_array="8",
-                    tooltip=f"J{day['numero']} : {seg['from_name']} → {seg['to_name']} — {seg_mode} (ligne directe)",
+                    tooltip=f'From "{from_label}" to "{to_label}" : {seg_mode} (ligne directe)',
                 ).add_to(m)
 
     # Marqueurs
@@ -265,11 +276,6 @@ def _render_map(days):
         st.caption(
             f"Itinéraire réel (segments routables) : "
             f"{format_distance(total_distance)} — {format_duration(total_duration)}"
-        )
-    if has_unsupported_mode:
-        st.caption(
-            "Les segments en *train* ou *bateau* ne sont pas routables via OpenRouteService → "
-            "affichés en lignes droites."
         )
     if not ors_key:
         st.caption(

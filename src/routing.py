@@ -15,17 +15,19 @@ MODE_TO_ORS_PROFILE = {
     "voiture personnelle": "driving-car",
     "voiture de location": "driving-car",
     "taxi": "driving-car",
-    "bus": "driving-car",  # ORS n'a pas de profil bus, on utilise driving-car
+    "bus": "driving-car",
+    # Train / métro : pas de profil ORS → routés via Google Maps Directions
+    # (si clé configurée). Sinon fallback driving-car.
+    "train": "driving-car",
+    "métro": "driving-car",
     # Rétrocompatibilité avec les anciens voyages en base :
     "voiture": "driving-car",
     "vélo": "cycling-regular",
-    # Les modes suivants ne sont pas supportés par ORS :
-    "métro": None,
-    "train": None,
+    "transport public": "driving-car",
+    "mixte": "driving-car",
+    # Modes sans équivalent routier (lignes droites) :
     "bateau": None,
     "avion": None,
-    "transport public": None,
-    "mixte": "driving-car",
 }
 
 

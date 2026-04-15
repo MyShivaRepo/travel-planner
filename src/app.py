@@ -38,6 +38,8 @@ if "fallback_api_key" not in st.session_state:
     st.session_state["fallback_api_key"] = db.get_setting("fallback_api_key") or ""
 if "ors_api_key" not in st.session_state:
     st.session_state["ors_api_key"] = db.get_setting("ors_api_key") or ""
+if "gmaps_api_key" not in st.session_state:
+    st.session_state["gmaps_api_key"] = db.get_setting("gmaps_api_key") or ""
 
 # ── Navigation horizontale compacte ──────────────────────────────────────────
 PAGES = ["Settings", "Where to Go", "Destination", "Travel"]

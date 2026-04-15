@@ -156,3 +156,42 @@ def render():
                     st.success("Clé ORS valide.")
                 else:
                     st.error("Clé ORS invalide ou erreur API.")
+
+    # ── API Google Maps Directions (transit : métro / train / bus) ───────────
+    st.divider()
+    st.subheader("API Google Maps Directions")
+    st.caption(
+        "Clé API Google Maps optionnelle pour calculer les itinéraires en transports publics "
+        "(métro, train, bus) avec horaires réels. "
+        "Activez l'API « Directions » sur console.cloud.google.com. "
+        "Si vide, les segments métro/train suivront un tracé routier approximatif."
+    )
+
+    if "gmaps_api_key" not in st.session_state:
+        st.session_state["gmaps_api_key"] = db.get_setting("gmaps_api_key") or ""
+    if "gmaps_key_input" not in st.session_state:
+        st.session_state["gmaps_key_input"] = st.session_state["gmaps_api_key"]
+
+    st.text_input(
+        "Clé API Google Maps",
+        type="password",
+        key="gmaps_key_input",
+    )
+
+    col_gm_save, col_gm_test = st.columns(2)
+    with col_gm_save:
+        if st.button("Enregistrer", type="primary", key="save_gmaps"):
+            gm_key = st.session_state["gmaps_key_input"].strip()
+            st.session_state["gmaps_api_key"] = gm_key
+            db.set_setting("gmaps_api_key", gm_key)
+            st.success("Clé Google Maps enregistrée." if gm_key else "Clé Google Maps effacée.")
+    with col_gm_test:
+        if st.button("Tester", key="test_gmaps"):
+            gm_key = st.session_state["gmaps_key_input"].strip()
+            if not gm_key:
+                st.warning("Veuillez saisir une clé API.")
+            else:
+                from google_routing import test_gmaps_key
+                with st.spinner("Test de la clé Google Maps..."):
+                    ok, msg = test_gmaps_key(gm_key)
+                st.success(msg) if ok else st.error(msg)

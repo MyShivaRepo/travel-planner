@@ -101,7 +101,10 @@ Affichage jour par jour (via des `expanders` dépliés par défaut). Pour chaque
 - Liste des POI du jour au format : `<Nom> (rang <N>)`
 
 **2. Liste des segments**
-- Chaque segment affiche le point de départ et d'arrivée au format : `<From> > <To> :` suivi d'une liste déroulante permettant de changer son `mode de transport` (modification sauvegardée immédiatement en base de données)
+Affichage dans un tableau
+- `<From> > <To>`
+- 
+
 
 **3. Logistique du soir**
 - **Hôtel** : nom et adresse de l'hôtel recommandé pour la nuit

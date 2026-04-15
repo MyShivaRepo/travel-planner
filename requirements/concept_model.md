@@ -61,7 +61,7 @@ Une `Activité` est possiblement réalisable en différents lieux (couple `latit
 ### Voyage
 
 Le 1er concept est le concept de `Voyage`.   
-Il représente la planification complète pour une `Destination` avec ses `POI(s)` et `Activité(s)`associés.        
+Il représente la planification complète pour une `Destination` avec ses `POI(s)` et `Activité(s)` associés.        
 Il est caractérisé par :   
 - une liste de `Jours` (numérotés de 1 à N)
 
@@ -69,7 +69,7 @@ Il est caractérisé par :
 
 Le 2nd concept est le concept de `Jour`.   
 Il est utilisé pour la planification du `Voyage`.      
-Un `Jour` contient un nombre fini de `Segment`, qui incarne le trajet d'un `hotel` de départ à un `hotel` d'arrivée en passant par 0, 1 ou plusieurs `POI(s)` et/ou `Activité(s)`.   
+Un `Jour` contient un nombre fini de `Segment`, qui incarne le trajet d'un `Hôtel` de départ à un `Hôtel` d'arrivée en passant par 0, 1 ou plusieurs `POI(s)` et/ou `Activité(s)`.   
 Il est caractérisé par :   
 - un `numéro` : le numéro du jour dans le voyage (Jour 1, Jour 2, ..., Jour N).    
 - une liste de `POI(s)` à visiter ce jour-là.
@@ -79,9 +79,9 @@ Il est caractérisé par :
 Chaque `Jour` est caractérisé en outre par la somme des `distances` et `durées` de chaque `Segment` et par la somme du `budget` de chaque `Segment`, `Hotel` et `Restaurant`.
 
 ### Segment
-Chaque `Segment` à un 1 point de départ et 1 point d'arrivée   
+Chaque `Segment` a un 1 point de départ et 1 point d'arrivée   
 - ces points peuvent être soit des `Hotels`, soit des `POI(s)`, soit des `Activité(s)`  (Pas les `Restaurants`)
-Chaque `Segment` a un `mode de transport` affecté : pied, vélo, voiture (personelle, location, taxi), bus, metro, train, bateau, avion.  
+Chaque `Segment` a un `mode de transport` affecté : pied, vélo, voiture (personnelle, location, taxi), bus, metro, train, bateau, avion.  
 Chaque `Segment` est caractérisé par :
 - Une `distance` (en km)
 - Une `durée` (en heure)

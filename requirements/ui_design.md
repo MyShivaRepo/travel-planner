@@ -8,7 +8,7 @@ Permet de configurer les API utilisées par l'application.
 
 ### LLM Principal
 
-Permet de configurer un fournisseur pricipal de LLM (Large Language Model).   
+Permet de configurer un fournisseur principal de LLM (Large Language Model).   
 
 Un champ `Fournisseur` permet de sélectionner un fournisseur (Anthropic/Claude, OpenAI/ChatGPT, Google/Gemini, ...).   
 Un champ `API Key` permet de saisir la clef.   

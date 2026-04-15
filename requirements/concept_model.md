@@ -38,6 +38,7 @@ Il est caractérisé par :
 - une `longitude`
 
 Un `POI` appartient à une seule `Destination` : relation N-1.   
+Un `POI` à une `latitude` et une `longitude` strictement déterminé.
 
 ### Activité
 
@@ -49,8 +50,9 @@ Il est caractérisé par :
 - une `description`
 - une `latitude`
 - une `longitude`
-- 
-Une `Activité` appartient à une seule `Destination` : relation N-1.   
+
+Une `Activité` appartient à une seule `Destination` : relation N-1. 
+Une `Activité` est possiblement réalisable en différents lieux (couple `latitude` et `longitude`)
   
 ## Les concepts qui incarnet la solution
 

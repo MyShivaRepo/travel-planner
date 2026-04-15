@@ -53,14 +53,14 @@ Dans la dernière colonne du tableau :
 
 ## Onglet `Destination`
 
-Permet de visualiser l'ensemble des `POI` pour la destination sélectionnée.
+Permet de visualiser l'ensemble des `POI(s)` et `Activité(s)`des pour la `Destination` sélectionnée.
 En haut de l'onglet :
-- Le nom de la destination, son type et le nombre de POI
-- Un `bouton` nommé `Générer le voyage` qui lance la planification jour par jour via l'API du LLM et bascule vers l'onglet `Travel`. Chaque clic crée un NOUVEAU voyage (sans écraser les voyages existants).
+- Le nom de la `Destination`, son type, le nombre de POI et le nomre d'activités
+- Un `bouton` nommé `Générer le voyage` qui lance la planification jour par jour via l'API du LLM et bascule vers l'onglet `Travel`.
 
-Cet onglet contient deux sous-onglets :
+Cet onglet contient trois sous-onglets :
 
-### Sous-onglet `Tableau`
+### Sous-onglet `POIs`
 
 La visualisation se fait dans un tableau triable avec les colonnes (Cf concept_model.md) :
 - Rang
@@ -70,19 +70,34 @@ La visualisation se fait dans un tableau triable avec les colonnes (Cf concept_m
 - Latitude
 - Longitude
 
-Le tableau est trié en cliquant sur l'en-tête de chaque colonne (tri croissant/décroissant).
-
 Dans la dernière colonne du tableau :
 - un `bouton` nommé `Modifier` permet de modifier les attributs de ce `POI`
 - un `bouton` nommé `Supprimer` permet de supprimer ce `POI`
 
 En bas du tableau, un `bouton` nommé `Ajouter un POI` invoque le LLM pour proposer un nouveau POI qui n'est pas déjà dans la liste existante.
 
+### Sous-onglet `Activités`
+La visualisation se fait dans un tableau triable avec les colonnes (Cf concept_model.md) :
+- Rang
+- Nom
+- Type
+- Description
+- Latitude
+- Longitude
+
+Dans la dernière colonne du tableau :
+- un `bouton` nommé `Modifier` permet de modifier les attributs de cette `Activité`
+- un `bouton` nommé `Supprimer` permet de supprimer cette `Activité`
+
+En bas du tableau, un `bouton` nommé `Ajouter une Activité` invoque le LLM pour proposer une nouvelle Activité qui n'est pas déjà dans la liste existante.
+
+
 ### Sous-onglet `Carte`
 
-Une carte géographique affiche l'ensemble des `POI` de la destination.
-L'échelle de la carte est adaptée automatiquement pour visualiser tous les `POI`.
-Chaque `POI` est représenté par un marqueur rouge circulaire contenant son numéro de rang. Le marqueur est cliquable et affiche une popup avec le nom, le type et la description.
+Une carte géographique affiche l'ensemble des `POI(s)` et des `Activité(s)` de la destination.
+L'échelle de la carte est adaptée automatiquement pour visualiser tous les éléments.
+Chaque `POI` est représenté par un marqueur rouge circulaire contenant son numéro de rang. Le marqueur est cliquable et affiche une popup avec le rang, le nom et le type.
+Chaque `Activité` est représenté par un marqueur orange circulaire contenant son numéro de rang. Le marqueur est cliquable et affiche une popup avec le rang, le nom et le type
 La carte occupe toute la hauteur disponible du navigateur.
 
 ## Onglet `Travel`

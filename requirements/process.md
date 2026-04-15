@@ -63,8 +63,6 @@ Pour chaque `Jour`, le LLM propose :
 
 ## 6. Visualisation et ajustement du voyage
 
-Dans l'onglet `Travel`, l'utilisateur consulte le dernier voyage généré dans deux sous-onglets :
-- `Tableau` : description détaillée de chaque journée ; l'utilisateur peut changer le mode de transport de chaque segment via une liste déroulante
+Dans l'onglet `Travel`, l'utilisateur consulte le `Voyage` généré dans deux sous-onglets :
+- `Tableau` : description détaillée de chaque journée avec : Liste des `POI(s)`, liste des `Activités`, liste des `Segments`, Logistique du soir (Restaurant et Hôtel)
 - `Carte` : tracé géographique du parcours complet de chaque journée, avec le vrai routage si la clé OpenRouteService est configurée et le mode de transport compatible
-
-L'utilisateur peut générer un nouveau voyage à tout moment en retournant sur l'onglet `Destination`.

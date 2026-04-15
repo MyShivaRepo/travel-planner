@@ -1,5 +1,18 @@
 # Modèle de concepts
 
+Le modèle de concepts s'articule autour de 3 concepts qui incarnent le `besoin` (les exigences du voyage) et de 3 concepts qui incarnent la `solution` (la planification du voyage).
+
+Les concepts `besoin` sont :
+- La `Destination`
+- Le `POI (Point Of Interest)`
+- L'`Activité`
+
+Les concepts `solution` sont :
+- La `Voyage`
+- Le `Jour`
+- Le `Segment`
+
+  
 ## Destination
 
 Le 1er concept clef est le concept de `Destination`.   

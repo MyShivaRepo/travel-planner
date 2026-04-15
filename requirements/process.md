@@ -46,6 +46,7 @@ L'Utilisateur peut :
 - Modifier manuellement une `Activité` existante
 - Supprimer une `Activité`
 - Ajouter une nouvelle `Activité` via le LLM (qui propose une `Activité` supplémentaire non déjà présent dans la liste)
+- Un champ "Commentaire" permet à l'Utilisateur de préciser au Système l'`Activité` qu'il souhaite.
 
 Le Système positionne par ailleurs (sous-onglet "carte") les `POIs` et les `Activités` sur une carte géographique dont l'échelle est adaptée.
 

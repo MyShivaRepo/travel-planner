@@ -99,7 +99,7 @@ En bas du tableau, un `bouton` nommé `Ajouter une Activité` invoque le LLM pou
 Une carte géographique affiche l'ensemble des `POI(s)` et des `Activité(s)` de la destination.
 L'échelle de la carte est adaptée automatiquement pour visualiser tous les éléments.
 Chaque `POI` est représenté par un marqueur rouge circulaire contenant son numéro de rang. Le marqueur est cliquable et affiche une popup avec le rang, le nom et le type.
-Chaque `Activité` est représenté par un marqueur orange circulaire contenant son numéro de rang. Le marqueur est cliquable et affiche une popup avec le rang, le nom et le type
+Chaque `Activité` est représenté par un marqueur orange circulaire contenant son numéro de rang. Le marqueur est cliquable et affiche une popup avec le rang, le nom et le type.
 La carte occupe toute la hauteur disponible du navigateur.
 
 ## Onglet `Travel`
@@ -113,7 +113,7 @@ Cet onglet contient deux sous-onglets :
 ### Sous-onglet `Tableau`
 
 Affichage jour par jour (via des `expanders` dépliés par défaut).
-Pour chaque `Jour`.
+Pour chaque `Jour` :
 - Affichage sur la même ligne : n° du jour, distance, durée, budget
 - Affichage en dessous de trois sections qui s'affichent dans l'ordre suivant :
 

@@ -33,6 +33,7 @@ L'Utilisateur peut :
 - Modifier manuellement un `POI` existant
 - Supprimer un `POI`
 - Ajouter un nouveau `POI` via le LLM (qui propose un `POI` supplémentaire non déjà présent dans la liste)
+- Un champ "Commentaire" permet à l'Utilisateur de préciser au Système le `POI` qu'il souhaite.
 
 Dans l'onglet `Destination`, sous-onglet "Activités", le Système présente les `Activités` dans un tableau triable :
 - Rang de l'activité 

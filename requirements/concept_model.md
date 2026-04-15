@@ -1,7 +1,7 @@
 # Modèle de concepts
 
 Le modèle de concepts s'articule autour de 3 concepts qui incarnent le `besoin` (les exigences du voyage) ...    
-... et de 3 concepts qui incarnent la `solution` (la planification du voyage).
+... et de 5 concepts qui incarnent la `solution` (la planification du voyage).
 
 Les concepts `besoin` sont :
 - La `Destination`
@@ -12,6 +12,8 @@ Les concepts `solution` sont :
 - Le `Voyage`
 - Le `Jour`
 - Le `Segment`
+- L' `Hotel `
+- Le  `Restaurant `
 
 ## Les concepts qui incarnent le `besoin`
 
@@ -72,8 +74,8 @@ Il est caractérisé par :
 - un `numéro` : le numéro du jour dans le voyage (Jour 1, Jour 2, ..., Jour N).    
 - une liste de `POI(s)` à visiter ce jour-là.
 - une liste d'`Activité(s)` à réaliser ce jour-là.   
-- un `Hôtel` : `nom`, `adresse` et `coordonnées GPS` (`latitude`, `longitude`) de l'hôtel recommandé pour la nuit, `budget`.      
-- un `Restaurant` : `nom`, `adresse` et `coordonnées GPS` (`latitude`, `longitude`) du restaurant recommandé pour le dîner, `budget`.     
+- un `Hôtel` recommandé pour la nuit.      
+- un `Restaurant` recommandé pour le dîner.     
 Chaque `Jour` est caractérisé en outre par la somme des `distances` et `durées` de chaque `Segment` et par la somme du `budget` de chaque `Segment`, `Hotel` et `Restaurant`.
 
 ### Segment
@@ -84,3 +86,17 @@ Chaque `Segment` est caractérisé par :
 - Une `distance` (en km)
 - Une `durée` (en heure)
 - Un `budget` (en Euro)
+
+### Hotel
+Chaque `Hotel` est caractérisé par :   
+- `nom`
+- `adresse`
+- `coordonnées GPS` (`latitude`, `longitude`)
+- `budget`
+
+### Restaurant
+Chaque `Restaurant` est caractérisé par :   
+- `nom`
+- `adresse`
+- `coordonnées GPS` (`latitude`, `longitude`)
+- `budget`

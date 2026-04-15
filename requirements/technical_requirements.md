@@ -2,10 +2,10 @@
 
 ## Déploiement
 
-L'application est développée dans une `image` Docker.
-Le `container` Docker est accessible à l'adresse http://localhost:9999.
-Les données de l'application (destinations, POI, voyages, segments, clés API) doivent être rendues pérennes via un `volume` Docker.
-Les modifications de l'interface utilisateur ne doivent pas impacter les données de l'application.
+L'application est développée dans une `image` Docker.   
+Le `container` Docker est accessible à l'adresse http://localhost:9999.   
+Les données de l'application (destinations, POI, voyages, segments, clés API) doivent être rendues pérennes via un `volume` Docker.   
+Les modifications de l'interface utilisateur ne doivent pas impacter les données de l'application.   
 
 ## Configuration des API
 

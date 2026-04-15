@@ -8,23 +8,29 @@ Permet de configurer les API utilisées par l'application.
 
 ### LLM Principal
 
-Permet de saisir l'`API Key` d'un fournisseur de LLM (Large Language Model).
-Sélectionner un fournisseur (Anthropic/Claude, OpenAI/ChatGPT, Google/Gemini, ...).
-Entrer la clef.
-Un bouton `Enregistrer` sauvegarde la clé en base de données.
-Un bouton `Tester` permet de vérifier que la clé est valide.
-Un message de confirmation ou d'erreur est affiché à l'utilisateur.
+Permet de configurer un fournisseur pricipal de LLM (Large Language Model).   
+
+Un champ `Fournisseur` permet de sélectionner un fournisseur (Anthropic/Claude, OpenAI/ChatGPT, Google/Gemini, ...).   
+Un champ `API Key` permet de saisir la clef.   
+Un bouton `Enregistrer` permet la sauvegarde de la clef en base de données.   
+Un bouton `Tester` permet de vérifier que la clef est valide.   
+Une zone de messages permet de confirmer la connection ou d'afficher un message d'erreur à l'utilisateur.   
 
 ### LLM de Secours (fallback)
 
-Permet de configurer un LLM de secours utilisé automatiquement si le LLM principal est indisponible (surcharge, timeout, erreur réseau).
-Sélection d'un fournisseur parmi la même liste, ou `Aucun`.
-Entrer la clef.
-Boutons `Enregistrer` et `Tester` identiques au LLM principal.
+Permet de configurer un LLM de secours utilisé automatiquement si le LLM principal est indisponible (surcharge, timeout, erreur réseau).   
+
+Champs, boutons et zone de messages identique au LLM principal.
 
 ### API de Routage (OpenRouteService)
 
 Clé API optionnelle d'OpenRouteService pour calculer les vrais tracés routiers sur la carte du voyage.
+Si la clé n'est pas fournie, la carte affiche des lignes droites entre les points.
+Boutons `Enregistrer` et `Tester`.
+
+### API Google Maps Directions
+
+Clé API optionnelle de Google Maps Directions pour calculer les vrais tracés ferroviaire et maritime sur la carte du voyage.
 Si la clé n'est pas fournie, la carte affiche des lignes droites entre les points.
 Boutons `Enregistrer` et `Tester`.
 

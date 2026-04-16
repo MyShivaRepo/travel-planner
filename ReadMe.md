@@ -9,7 +9,7 @@ En retour, le Système propose un `Voyage` composé de N `Jours`.
 Chaque `Jour` comprenant :   
 - Une liste de `POI(s)` à visiter   
 - Une liste d'`Activité(s)` à réaliser   
-- Une liste de `Segment(s)` à suivre (Trajet d'un point A à un point B)  
+- Une liste de `Segment(s)` à suivre (Trajet(s) d'un point A à un point B)  
 - Un `Hôtel` du soir et un `Restaurant` pour diner  
 
 ## Implémentation technique

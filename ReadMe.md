@@ -1,13 +1,15 @@
 # Travel Planner
 
-Application de planification de voyages basée sur l'Inteligence Artificielle.
+Application de planification de voyages basée sur l'Inteligence Artificielle (IA).
 
 ## Fonctionnalités
 
-- **Settings** : configuration et test de la clé de différents LLMs (Claude, Gemini, ChatGPT, ...)
-- **Where to Go** : saisir une destination (pays, région, ville) et un nombre de POI souhaités, génération automatique des sites incontournables
-- **Destination** : tableau CRUD des POI (ajouter, modifier, supprimer) et carte interactive
-- **Travel** : planification jour par jour avec hôtels et restaurants recommandés
+L'Utilisateur sélectionne une `Destination` (Pays, Région, Ville) et défini un nombre de `POI' (Point Of Interest) à visiter et un nombre d'`Activité` à réaliser.
+En retour, le Système propose un `Voyage` composé de N `Jours`. Chaque `Jour` comprenant :
+- Une liste de `POI(s)` à visiter
+- Une liste d'`Activité(s)` à réaliser
+- Une liste de `Segment(s)` à suivre (Trajet d'un point A à un point B)
+- Un hôtel du soir et un restaurant pour diner
 
 ## Lancement via Docker
 

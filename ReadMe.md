@@ -10,7 +10,7 @@ Chaque `Jour` comprenant :
 - Une liste de `POI(s)` à visiter.      
 - Une liste d'`Activité(s)` à réaliser.     
 - Une liste de `Segment(s)` à suivre (Trajet(s) d'un point A à un point B).   
-`Hôtel du matin` > `POI` et/ou `Activité` 1 > `POI` et/ou `Activité` 2 > ... > `Hôtel du soir`)
+(`Hôtel du matin` > `POI` et/ou `Activité` 1 > `POI` et/ou `Activité` 2 > ... > `Hôtel du soir`)
 - Un `Hôtel` du soir et un `Restaurant` pour diner.   
 
 ## Implémentation technique

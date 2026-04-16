@@ -9,7 +9,7 @@ En retour, le Système propose un `Voyage` composé de N `Jours`. Chaque `Jour` 
 - Une liste de `POI(s)` à visiter
 - Une liste d'`Activité(s)` à réaliser
 - Une liste de `Segment(s)` à suivre (Trajet d'un point A à un point B)
-- Un hôtel du soir et un restaurant pour diner
+- Un `Hôtel` du soir et un `Restaurant` pour diner
 
 ## Lancement via Docker
 

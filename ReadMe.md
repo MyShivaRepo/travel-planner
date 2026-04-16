@@ -20,8 +20,7 @@ Les données de l'application sont persistées dans un `volume` Docker (`travel-
 
 ## Stack technique
 
-- Python 3.12
-- Streamlit
-- Folium (cartes interactives)
-- SQLite (persistance)
-- Docker
+**Application** · Python 3.12 · Streamlit · SQLite · Folium   
+**APIs LLM** · Anthropic (Claude) · OpenAI (ChatGPT) · Google (Gemini)   
+**APIs routage** · OpenRouteService · Google Maps Directions   
+**Déploiement** · Docker

@@ -15,7 +15,7 @@ Chaque `Jour` comprenant :
 ## Implémentation technique
 
 Il s'agit d'une application web qui est livrée via une `image` Docker.   
-Le `container` Docker` est accessible sur <a href="http://localhost:9999">http://localhost:9999</a>.    
+Le `container` Docker est accessible sur <a href="http://localhost:9999">http://localhost:9999</a>.    
 Les données de l'application sont persistées dans un `volume` Docker (`travel-data`).   
 
 ## Stack technique

@@ -11,16 +11,11 @@ En retour, le Système propose un `Voyage` composé de N `Jours`. Chaque `Jour` 
 - Une liste de `Segment(s)` à suivre (Trajet d'un point A à un point B)
 - Un `Hôtel` du soir et un `Restaurant` pour diner
 
-## Lancement via Docker
+## Implémentation technique
 
-```bash
-cd docker
-docker compose up --build
-```
-
-L'application est accessible sur **http://localhost:9999**.
-
-Les données sont persistées dans un volume Docker (`travel-data`).
+Il s'agit d'une application web qui est livrée via une `image` Docker
+Le `container` Docker` est accessible sur **http://localhost:9999**.
+Les données de l'application sont persistées dans un `volume` Docker (`travel-data`).
 
 ## Stack technique
 

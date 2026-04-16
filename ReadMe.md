@@ -1,10 +1,10 @@
 # Travel Planner
 
-Application de planification de voyages basée sur l'IA (Claude d'Anthropic).
+Application de planification de voyages basée sur l'IA.
 
 ## Fonctionnalités
 
-- **Settings** : configuration et test de la clé API Claude
+- **Settings** : configuration et test de la clé de différents LLMs (Claude, Gemini, ChatGPT, ...)
 - **Where to Go** : saisir une destination (pays, région, ville) et un nombre de POI souhaités, génération automatique des sites incontournables
 - **Destination** : tableau CRUD des POI (ajouter, modifier, supprimer) et carte interactive
 - **Travel** : planification jour par jour avec hôtels et restaurants recommandés
@@ -24,7 +24,6 @@ Les données sont persistées dans un volume Docker (`travel-data`).
 
 - Python 3.12
 - Streamlit
-- Claude API (Anthropic)
 - Folium (cartes interactives)
 - SQLite (persistance)
 - Docker

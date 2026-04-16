@@ -1,6 +1,6 @@
 # Travel Planner
 
-Application de planification de voyages basée sur l'IA.
+Application de planification de voyages basée sur l'Inteligence Artificielle.
 
 ## Fonctionnalités
 

@@ -52,6 +52,7 @@ Il est caractérisé par :
 - une `description`
 - une `latitude`
 - une `longitude`
+- un `fournisseur`
 
 Une `Activité` appartient à une seule `Destination` : relation N-1. 
 Une `Activité` est possiblement réalisable en différents lieux (couple `latitude` et `longitude`)

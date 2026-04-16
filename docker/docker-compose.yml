@@ -7,7 +7,6 @@ services:
     ports:
       - "9999:9999"
     environment:
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - DB_PATH=/data/travel_planner.db
     volumes:
       - travel-data:/data

@@ -113,7 +113,8 @@ MODE_AVG_SPEED_KMH = {
 
 def compute_segment_metrics(mode, coords, ors_key, gmaps_key):
     """
-    Retourne (distance_m, duration_sec) pour un segment.
+    Retourne (distance_km, duration_h) pour un segment, en kilomètres et heures
+    conformément au modèle de concepts (Segment.distance en km, Segment.durée en heures).
 
     Tente d'abord le vrai routage (ORS / Google Maps / great-circle).
     Si indisponible, fallback sur la distance à vol d'oiseau et une durée
@@ -122,7 +123,7 @@ def compute_segment_metrics(mode, coords, ors_key, gmaps_key):
     if len(coords) < 2:
         return None, None
 
-    # Essayer le vrai routage
+    # Essayer le vrai routage (les APIs retournent mètres et secondes en interne)
     route_data = None
     if mode == "avion":
         from google_routing import great_circle_route
@@ -138,30 +139,31 @@ def compute_segment_metrics(mode, coords, ors_key, gmaps_key):
         route_data = get_route(coords, mode, ors_key)
 
     if route_data:
-        return route_data["distance"], route_data["duration"]
+        return route_data["distance"] / 1000.0, route_data["duration"] / 3600.0
 
     # Fallback : haversine + vitesse moyenne du mode
-    dist_m = haversine_m(coords[0][0], coords[0][1], coords[-1][0], coords[-1][1])
+    dist_km = haversine_m(coords[0][0], coords[0][1], coords[-1][0], coords[-1][1]) / 1000.0
     speed_kmh = MODE_AVG_SPEED_KMH.get(mode, 50)
-    duration_sec = (dist_m / 1000 / speed_kmh) * 3600
-    return dist_m, duration_sec
+    duration_h = dist_km / speed_kmh
+    return dist_km, duration_h
 
 
-def format_duration(seconds):
-    """Formate une durée en secondes en texte lisible."""
-    if seconds is None:
+def format_duration(hours):
+    """Formate une durée en heures (float) en texte lisible."""
+    if hours is None:
         return ""
-    h = int(seconds // 3600)
-    m = int((seconds % 3600) // 60)
+    total_sec = int(hours * 3600)
+    h = total_sec // 3600
+    m = (total_sec % 3600) // 60
     if h > 0:
         return f"{h}h{m:02d}"
     return f"{m} min"
 
 
-def format_distance(meters):
-    """Formate une distance en mètres en texte lisible."""
-    if meters is None:
+def format_distance(km):
+    """Formate une distance en kilomètres (float) en texte lisible."""
+    if km is None:
         return ""
-    if meters < 1000:
-        return f"{int(meters)} m"
-    return f"{meters/1000:.1f} km"
+    if km < 1:
+        return f"{int(km * 1000)} m"
+    return f"{km:.1f} km"

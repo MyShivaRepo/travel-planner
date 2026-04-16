@@ -37,7 +37,11 @@ def _get_segment_route(mode, coords, ors_key, gmaps_key):
         return get_route(coords, mode, ors_key), "ors"
     return None, None
 
-TRANSPORT_MODES = ["à pied", "en vélo", "voiture", "train", "bus", "bateau"]
+TRANSPORT_MODES = [
+    "à pied", "en vélo",
+    "voiture personnelle", "voiture de location", "taxi",
+    "bus", "métro", "train", "bateau", "avion",
+]
 
 # Couleurs par jour pour distinguer les trajectoires
 DAY_COLORS = ["blue", "red", "green", "purple", "orange", "darkred", "darkblue",
@@ -92,8 +96,8 @@ def _render_table(days):
         segments = day.get("segments", [])
 
         # Agrégats du jour
-        total_dist = sum((s.get("distance_m") or 0) for s in segments)
-        total_dur = sum((s.get("duration_sec") or 0) for s in segments)
+        total_dist = sum((s.get("distance_km") or 0) for s in segments)
+        total_dur = sum((s.get("duration_h") or 0) for s in segments)
         total_budget = sum((s.get("budget") or 0) for s in segments)
         total_budget += (day.get("hotel_budget") or 0) + (day.get("restaurant_budget") or 0)
 
@@ -103,16 +107,26 @@ def _render_table(days):
         )
 
         with st.expander(header, expanded=True):
-            # 1. Liste des sites à visiter (classés par rang)
-            st.markdown("**Liste des sites à visiter** *(classés par leur Rang)*")
+            # 1. Liste des POIs à visiter (classés par rang)
+            st.markdown("**Liste des POIs à visiter** *(classés par leur Rang)*")
             if day["pois"]:
                 sorted_pois = sorted(day["pois"], key=lambda p: p.get("rang", 999))
                 for poi in sorted_pois:
                     st.markdown(f"- {poi['nom']} (rang {poi['rang']})")
             else:
-                st.markdown("*Aucun site prévu ce jour.*")
+                st.markdown("*Aucun POI prévu ce jour.*")
 
-            # 2. Liste des segments (tableau avec édition du mode inline)
+            # 2. Liste des Activités à réaliser (classées par rang)
+            st.markdown("**Liste des Activités à réaliser** *(classées par leur Rang)*")
+            activities = day.get("activities", [])
+            if activities:
+                sorted_acts = sorted(activities, key=lambda a: a.get("rang", 999))
+                for act in sorted_acts:
+                    st.markdown(f"- {act['nom']} (rang {act['rang']})")
+            else:
+                st.markdown("*Aucune activité prévue ce jour.*")
+
+            # 3. Liste des segments (tableau avec édition du mode inline)
             if segments:
                 st.markdown("**Liste des segments**")
                 # En-têtes
@@ -136,8 +150,8 @@ def _render_table(days):
                             key=f"seg_mode_{seg['id']}",
                             label_visibility="collapsed",
                         )
-                    c3.write(format_distance(seg.get("distance_m") or 0))
-                    c4.write(format_duration(seg.get("duration_sec") or 0))
+                    c3.write(format_distance(seg.get("distance_km") or 0))
+                    c4.write(format_duration(seg.get("duration_h") or 0))
                     budget_val = seg.get("budget")
                     c5.write(f"{budget_val:.0f} €" if budget_val is not None else "—")
 
@@ -181,6 +195,8 @@ def _render_map(days):
             all_coords.append((day["restaurant_latitude"], day["restaurant_longitude"]))
         for poi in day.get("pois", []):
             all_coords.append((poi["latitude"], poi["longitude"]))
+        for act in day.get("activities", []):
+            all_coords.append((act["latitude"], act["longitude"]))
 
     if not all_coords:
         st.warning(
@@ -197,7 +213,7 @@ def _render_map(days):
 
     m = folium.Map(location=[center_lat, center_lon], zoom_start=zoom)
 
-    # Construire le dictionnaire : nom du point → label court (Jn / POIx / Resto Jn)
+    # Construire le dictionnaire : nom du point → label court (Jn / POIx / Actx / Resto Jn)
     name_to_label = {}
     for day in days:
         n = day["numero"]
@@ -207,6 +223,8 @@ def _render_map(days):
             name_to_label[day["restaurant_nom"]] = f"Resto J{n}"
         for poi in day.get("pois", []):
             name_to_label[poi["nom"]] = f"POI{poi['rang']}"
+        for act in day.get("activities", []):
+            name_to_label[act["nom"]] = f"Act{act['rang']}"
 
     def _label(name):
         return name_to_label.get(name, name)
@@ -236,12 +254,14 @@ def _render_map(days):
 
             if route_data:
                 use_real_routing = True
-                total_duration += route_data["duration"]
-                total_distance += route_data["distance"]
+                # route_data vient des APIs de routage : distance en mètres, durée en secondes
+                dist_km = route_data["distance"] / 1000.0
+                dur_h = route_data["duration"] / 3600.0
+                total_duration += dur_h
+                total_distance += dist_km
                 tooltip = (
                     f'From "{from_label}" to "{to_label}" : {seg_mode} '
-                    f"({format_distance(route_data['distance'])}, "
-                    f"{format_duration(route_data['duration'])})"
+                    f"({format_distance(dist_km)}, {format_duration(dur_h)})"
                 )
                 folium.PolyLine(
                     route_data["geometry"],
@@ -302,12 +322,33 @@ def _render_map(days):
                     f"{poi.get('description', '')}",
                     max_width=300,
                 ),
-                tooltip=f"J{jour_num} — {poi['nom']}",
+                tooltip=f"J{jour_num} — POI{poi['rang']} {poi['nom']}",
                 icon=folium.DivIcon(
                     html=f'<div style="background-color:red;color:white;border-radius:50%;'
                          f'width:24px;height:24px;text-align:center;line-height:24px;'
                          f'font-size:12px;font-weight:bold;border:2px solid darkred;">'
                          f'{poi["rang"]}</div>',
+                    icon_size=(24, 24),
+                    icon_anchor=(12, 12),
+                ),
+            ).add_to(m)
+
+        # Activités orange numérotées
+        for act in day.get("activities", []):
+            folium.Marker(
+                location=[act["latitude"], act["longitude"]],
+                popup=folium.Popup(
+                    f"<b>Jour {jour_num} — {act['nom']}</b><br>"
+                    f"<i>{act['type']}</i><br>"
+                    f"{act.get('description', '') or ''}",
+                    max_width=300,
+                ),
+                tooltip=f"J{jour_num} — Act{act['rang']} {act['nom']}",
+                icon=folium.DivIcon(
+                    html=f'<div style="background-color:orange;color:white;border-radius:50%;'
+                         f'width:24px;height:24px;text-align:center;line-height:24px;'
+                         f'font-size:12px;font-weight:bold;border:2px solid #cc8400;">'
+                         f'{act["rang"]}</div>',
                     icon_size=(24, 24),
                     icon_anchor=(12, 12),
                 ),

@@ -1,8 +1,7 @@
 import streamlit as st
-import pandas as pd
 
 import database as db
-from llm_api import generate_pois
+from llm_api import generate_pois, generate_activities
 
 
 def render():
@@ -12,13 +11,17 @@ def render():
 
     # ── Formulaire de nouvelle destination ────────────────────────────────────
     st.subheader("Nouvelle destination")
-    col1, col2, col3 = st.columns([3, 2, 2])
+    col1, col2 = st.columns([3, 2])
     with col1:
         nom = st.text_input("Nom", placeholder="ex : Paris, Toscane, Japon...")
     with col2:
         type_dest = st.selectbox("Type", ["Pays", "Région", "Ville"])
-    with col3:
-        nb_pois = st.slider("Nombre de POI", min_value=3, max_value=20, value=8)
+
+    col_poi, col_act = st.columns(2)
+    with col_poi:
+        nb_pois = st.slider("Nombre de POIs", min_value=3, max_value=20, value=8)
+    with col_act:
+        nb_activities = st.slider("Nombre d'activités", min_value=0, max_value=15, value=5)
 
     if st.button("Rechercher", type="primary"):
         if not nom.strip():
@@ -28,21 +31,38 @@ def render():
             st.error("Veuillez d'abord configurer votre clé API dans l'onglet Settings.")
             return
 
-        with st.spinner(f"Recherche des {nb_pois} POI pour « {nom} »..."):
+        provider = st.session_state.get("llm_provider")
+        pois = []
+        activities = []
+
+        with st.spinner(f"Recherche des {nb_pois} POIs pour « {nom} »..."):
             try:
-                provider = st.session_state.get("llm_provider")
                 pois = generate_pois(nom.strip(), type_dest, nb_pois, provider=provider, api_key=api_key)
             except Exception as e:
-                st.error(f"Erreur lors de la génération des POI : {e}")
+                st.error(f"Erreur lors de la génération des POIs : {e}")
                 return
 
         if not pois:
             st.warning("Aucun POI retourné. Essayez une autre destination.")
             return
 
+        if nb_activities > 0:
+            with st.spinner(f"Recherche des {nb_activities} activités pour « {nom} »..."):
+                try:
+                    activities = generate_activities(
+                        nom.strip(), type_dest, nb_activities,
+                        provider=provider, api_key=api_key,
+                    )
+                except Exception as e:
+                    st.warning(f"Activités non générées : {e}")
+
         dest_id = db.create_destination(nom.strip(), type_dest)
         db.bulk_create_pois(dest_id, pois)
-        st.success(f"{len(pois)} POI générés pour « {nom} ».")
+        if activities:
+            db.bulk_create_activities(dest_id, activities)
+        st.success(
+            f"{len(pois)} POIs et {len(activities)} activités générés pour « {nom} »."
+        )
         st.rerun()
 
     # ── Tableau des destinations existantes ───────────────────────────────────
@@ -55,14 +75,17 @@ def render():
         return
 
     for dest in destinations:
-        nb = len(db.get_pois_for_destination(dest["id"]))
-        col_nom, col_type, col_nb, col_actions = st.columns([3, 2, 1, 2])
+        nb_p = len(db.get_pois_for_destination(dest["id"]))
+        nb_a = len(db.get_activities_for_destination(dest["id"]))
+        col_nom, col_type, col_nb_p, col_nb_a, col_actions = st.columns([3, 2, 1, 1, 2])
         with col_nom:
             st.write(f"**{dest['nom']}**")
         with col_type:
             st.write(dest["type"])
-        with col_nb:
-            st.write(f"{nb} POI")
+        with col_nb_p:
+            st.write(f"{nb_p} POIs")
+        with col_nb_a:
+            st.write(f"{nb_a} activités")
         with col_actions:
             btn_col1, btn_col2 = st.columns(2)
             with btn_col1:

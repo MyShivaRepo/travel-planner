@@ -63,9 +63,10 @@ Le paramètre `radiuses: [-1]` est utilisé pour permettre à ORS de chercher le
 Modes supportés (routage transit avec horaires réels) :
 - métro
 - train
-- bus
 
 Décodage local du polyline encodé retourné par l'API.
+
+Le module implémente également le mode `bus` au niveau du mapping Google Directions, mais ce mode n'est pas activé dans le dispatch de routage : conformément au design UI, les segments `bus` sont routés via OpenRouteService (profil `driving-car`). Le mapping GMaps pour `bus` est réservé à une éventuelle évolution future.
 
 ### Great-circle (calcul local, sans API)
 
@@ -107,3 +108,14 @@ Chaque segment a un unique mode de transport parmi :
 - avion
 
 Le mode de transport est initialement proposé par le LLM puis peut être modifié par l'utilisateur dans l'onglet `Travel` (sous-onglet `Tableau`).
+
+## Coordonnées GPS
+
+Toutes les coordonnées GPS (`latitude`, `longitude`) utilisées dans l'application sont exprimées en WGS84 en degrés décimaux.
+
+Le couple `(0, 0)` — dit "Null Island" — est conventionnellement considéré comme une coordonnée **absente** : un POI, une Activité, un Hôtel, un Restaurant ou une extrémité de segment dont les coordonnées sont `(0, 0)` n'est ni affiché sur les cartes, ni utilisé dans les calculs de routage, ni pris en compte dans le tri.
+
+Cette convention implique par construction :
+- que les rangs (`rang`) des `POI` et `Activité` sont toujours ≥ 1 (jamais 0),
+- que les latitudes et longitudes des entités valides sont toujours non-nulles et non-zéro,
+- et que les tris sur les colonnes numériques (rang, latitude, longitude) ne mélangent jamais types numériques et valeurs "vides".

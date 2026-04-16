@@ -1,19 +1,15 @@
 import json
-import os
 import re
 
 PROVIDERS = {
     "Anthropic / Claude": {
         "models": ["claude-sonnet-4-20250514", "claude-haiku-4-5-20251001"],
-        "env_key": "ANTHROPIC_API_KEY",
     },
     "OpenAI / ChatGPT": {
         "models": ["gpt-4o", "gpt-4o-mini"],
-        "env_key": "OPENAI_API_KEY",
     },
     "Google / Gemini": {
         "models": ["gemini-2.5-flash", "gemini-2.5-pro"],
-        "env_key": "GOOGLE_API_KEY",
     },
 }
 
@@ -31,6 +27,7 @@ SYSTEM_TRAVEL = (
     '{"jours": [{'
     '"numero": int, '
     '"poi_noms": [str], '
+    '"activity_noms": [str], '
     '"hotel_nom": str, "hotel_adresse": str, "hotel_latitude": float, "hotel_longitude": float, '
     '"hotel_budget": float (euros/nuit), '
     '"restaurant_nom": str, "restaurant_adresse": str, "restaurant_latitude": float, "restaurant_longitude": float, '
@@ -173,11 +170,10 @@ def _resolve(provider=None, api_key=None, model=None):
     if not provider:
         raise ValueError("Aucun fournisseur LLM sélectionné. Configurez-le dans Settings.")
     info = PROVIDERS[provider]
-    key = api_key or os.environ.get(info["env_key"], "")
-    if not key:
+    if not api_key:
         raise ValueError(f"Clé API manquante pour {provider}.")
     mdl = model or info["models"][0]
-    return provider, key, mdl
+    return provider, api_key, mdl
 
 
 def test_api_key(provider, api_key, model=None):
@@ -230,21 +226,111 @@ def generate_pois(destination_nom, destination_type, nb_pois, provider=None, api
     return data.get("pois", [])
 
 
-def generate_additional_poi(destination_nom, existing_pois, provider=None, api_key=None, model=None):
-    existing_names = "\n".join(f"- {p['nom']}" for p in existing_pois)
-    user_msg = (
-        f"Pour la destination « {destination_nom} », voici les sites déjà retenus :\n"
-        f"{existing_names}\n\n"
-        "Propose UN SEUL nouveau site touristique incontournable qui n'est PAS dans cette liste. "
-        "Fournis : rang, nom, type (Nature, Architecture, Histoire, Musée, Gastronomie, etc.), "
-        "description courte, latitude et longitude précises (WGS84)."
+ACTIVITY_SCHEMA_FIELDS = (
+    '{"rang": int, "nom": str, '
+    '"type": str, "description": str, '
+    '"latitude": float, "longitude": float, '
+    '"fournisseur_url": str (URL complète du site web du prestataire proposant '
+    'cette activité, ex: https://www.cooking-school-paris.com)}'
+)
+
+
+def generate_activities(destination_nom, destination_type, nb_activities, provider=None, api_key=None, model=None):
+    system = (
+        "Tu es un expert en voyages et tourisme. "
+        "Réponds UNIQUEMENT en JSON valide, sans texte avant ou après. "
+        'Le JSON doit avoir la structure : {"activities": [' + ACTIVITY_SCHEMA_FIELDS + ", ...]}"
     )
+    user_msg = (
+        f"Liste les {nb_activities} activités touristiques caractéristiques à réaliser "
+        f"à « {destination_nom} » ({destination_type}). "
+        "Pour chaque activité fournis : rang, nom, type (Sport, Culture, Cuisine, Bien-être, etc.), "
+        "description courte, latitude et longitude précises (WGS84) d'un lieu où la réaliser, "
+        "et fournisseur_url = URL complète du site web d'un prestataire réel proposant cette activité "
+        "(par exemple le site d'une école de cuisine, d'un guide, d'un organisme de visite). "
+        "Les activités doivent être DIFFÉRENTES des simples visites de sites (POI) : "
+        "privilégie des expériences à faire (cours de cuisine, randonnée guidée, concert, spa, atelier, dégustation, etc.). "
+        "Trie du plus emblématique au moins emblématique."
+    )
+    fb_p, fb_k, fb_m = _get_fallback()
+    raw = _llm_call(provider, api_key, model, system, user_msg,
+                     fallback_provider=fb_p, fallback_api_key=fb_k, fallback_model=fb_m)
+    data = _extract_json(raw)
+    return data.get("activities", [])
+
+
+def generate_additional_activity(destination_nom, existing_activities, commentaire=None,
+                                  provider=None, api_key=None, model=None):
+    existing_names = "\n".join(f"- {a['nom']}" for a in existing_activities) or "(aucune)"
+    system = (
+        "Tu es un expert en voyages et tourisme. "
+        "Réponds UNIQUEMENT en JSON valide, sans texte avant ou après. "
+        'Le JSON doit avoir la structure : ' + ACTIVITY_SCHEMA_FIELDS
+    )
+
+    commentaire_clean = (commentaire or "").strip()
+
+    if commentaire_clean:
+        user_msg = (
+            f"Destination : « {destination_nom} ».\n\n"
+            f"⚠️ DEMANDE PRIORITAIRE DE L'UTILISATEUR : « {commentaire_clean} »\n\n"
+            f"Tu DOIS proposer UNE SEULE nouvelle activité touristique qui :\n"
+            f"1. Correspond EXACTEMENT à la demande de l'utilisateur ci-dessus (critère principal)\n"
+            f"2. N'est PAS dans la liste suivante des activités déjà retenues :\n"
+            f"{existing_names}\n\n"
+            f"Fournis : rang, nom, type (Sport, Culture, Cuisine, Bien-être, etc.), "
+            f"description courte, latitude et longitude précises (WGS84) d'un lieu où la réaliser, "
+            f"et fournisseur_url = URL complète du site d'un prestataire réel proposant cette activité."
+        )
+    else:
+        user_msg = (
+            f"Pour la destination « {destination_nom} », voici les activités déjà retenues :\n"
+            f"{existing_names}\n\n"
+            "Propose UNE SEULE nouvelle activité touristique qui n'est PAS dans cette liste. "
+            "Fournis : rang, nom, type (Sport, Culture, Cuisine, Bien-être, etc.), "
+            "description courte, latitude et longitude précises (WGS84), et fournisseur_url "
+            "(URL complète du site web d'un prestataire réel proposant cette activité)."
+        )
+
+    fb_p, fb_k, fb_m = _get_fallback()
+    raw = _llm_call(provider, api_key, model, system, user_msg,
+                     fallback_provider=fb_p, fallback_api_key=fb_k, fallback_model=fb_m)
+    data = _extract_json(raw)
+    if "nom" in data:
+        return data
+    activities = data.get("activities", [])
+    return activities[0] if activities else None
+
+
+def generate_additional_poi(destination_nom, existing_pois, commentaire=None,
+                              provider=None, api_key=None, model=None):
+    existing_names = "\n".join(f"- {p['nom']}" for p in existing_pois) or "(aucun)"
     system = (
         "Tu es un expert en voyages et tourisme. "
         "Réponds UNIQUEMENT en JSON valide, sans texte avant ou après. "
         'Le JSON doit avoir la structure : {"rang": int, "nom": str, '
         '"type": str, "description": str, "latitude": float, "longitude": float}'
     )
+    commentaire_clean = (commentaire or "").strip()
+    if commentaire_clean:
+        user_msg = (
+            f"Destination : « {destination_nom} ».\n\n"
+            f"⚠️ DEMANDE PRIORITAIRE DE L'UTILISATEUR : « {commentaire_clean} »\n\n"
+            f"Tu DOIS proposer UN SEUL nouveau site touristique (POI) qui :\n"
+            f"1. Correspond EXACTEMENT à la demande de l'utilisateur ci-dessus (critère principal)\n"
+            f"2. N'est PAS dans la liste suivante des sites déjà retenus :\n"
+            f"{existing_names}\n\n"
+            f"Fournis : rang, nom, type (Nature, Architecture, Histoire, Musée, Gastronomie, etc.), "
+            f"description courte, latitude et longitude précises (WGS84)."
+        )
+    else:
+        user_msg = (
+            f"Pour la destination « {destination_nom} », voici les sites déjà retenus :\n"
+            f"{existing_names}\n\n"
+            "Propose UN SEUL nouveau site touristique incontournable qui n'est PAS dans cette liste. "
+            "Fournis : rang, nom, type (Nature, Architecture, Histoire, Musée, Gastronomie, etc.), "
+            "description courte, latitude et longitude précises (WGS84)."
+        )
     fb_p, fb_k, fb_m = _get_fallback()
     raw = _llm_call(provider, api_key, model, system, user_msg,
                      fallback_provider=fb_p, fallback_api_key=fb_k, fallback_model=fb_m)
@@ -255,23 +341,31 @@ def generate_additional_poi(destination_nom, existing_pois, provider=None, api_k
     return pois[0] if pois else None
 
 
-def generate_travel(destination_nom, pois, provider=None, api_key=None, model=None):
+def generate_travel(destination_nom, pois, activities=None, provider=None, api_key=None, model=None):
     pois_desc = "\n".join(
         f"- {p['nom']} ({p['type']}, lat:{p['latitude']}, lon:{p['longitude']})"
         for p in pois
     )
+    activities = activities or []
+    activities_desc = "\n".join(
+        f"- {a['nom']} ({a['type']}, lat:{a['latitude']}, lon:{a['longitude']})"
+        for a in activities
+    ) or "(aucune)"
 
     user_msg = (
         f"Planifie un voyage jour par jour pour visiter « {destination_nom} ». "
-        f"Voici les sites à visiter :\n{pois_desc}\n\n"
+        f"Voici les POI à visiter :\n{pois_desc}\n\n"
+        f"Voici les Activités à réaliser :\n{activities_desc}\n\n"
         "Pour chaque jour, propose :\n"
-        "- Les sites (poi_noms) à visiter ce jour-là (regroupe par proximité géographique)\n"
+        "- Les POI (poi_noms) à visiter ce jour-là (regroupe par proximité géographique)\n"
+        "- Les Activités (activity_noms) à réaliser ce jour-là (regroupe par proximité)\n"
         "- Un hôtel bien noté pour la nuit (hotel_nom, hotel_adresse, hotel_latitude, hotel_longitude, "
         "hotel_budget = prix estimé par nuit en euros)\n"
         "- Un restaurant bien noté pour le dîner (restaurant_nom, restaurant_adresse, restaurant_latitude, "
         "restaurant_longitude, restaurant_budget = prix estimé par personne en euros)\n"
-        "- Une liste ORDONNÉE de segments (segments) représentant les déplacements : "
-        "hôtel matin → POI1 → POI2 → ... → restaurant → hôtel soir (ou hôtel suivant). "
+        "- Une liste ORDONNÉE de segments (segments) représentant les déplacements de la journée : "
+        "hôtel matin → (POIs et/ou Activités dans l'ordre) → hôtel soir (ou hôtel suivant). "
+        "Les extrémités d'un segment sont UNIQUEMENT des hôtels, POIs ou Activités (JAMAIS le restaurant). "
         "Chaque segment a un from_name/from_latitude/from_longitude, un to_name/to_latitude/to_longitude, "
         "un transport_mode, et un budget estimé en euros "
         "(0 pour à pied/vélo ; prix d'un billet/course pour transports ; prix estimé du carburant pour voiture).\n\n"

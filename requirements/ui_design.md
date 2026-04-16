@@ -86,6 +86,7 @@ La visualisation se fait dans un tableau triable avec les colonnes (Cf concept_m
 - Description
 - Latitude
 - Longitude
+- Fournisseur
 
 Dans la dernière colonne du tableau :
 - un `bouton` nommé `Modifier` permet de modifier les attributs de cette `Activité`

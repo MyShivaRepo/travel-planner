@@ -16,7 +16,8 @@ Chaque `Jour` comprenant :
 
 Il s'agit d'une application web qui est livrée via une `image` Docker.   
 Le `container` Docker est accessible sur <a href="http://localhost:9999">http://localhost:9999</a>.    
-Les données de l'application sont persistées dans un `volume` Docker (`travel-data`).   
+Les données de l'application sont persistées dans un `volume` Docker (`travel-data`).
+Rq : Les modifications de l'IHM (Interface Homme-Machine) ne doivent pas impacter les données.   
 
 ## Stack technique
 

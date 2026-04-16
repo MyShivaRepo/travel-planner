@@ -54,7 +54,7 @@ Il est caractérisé par :
 - une `longitude`
 - un `fournisseur`
 
-Une `Activité` appartient à une seule `Destination` : relation N-1. 
+Une `Activité` appartient à une seule `Destination` : relation N-1.   
 Une `Activité` est possiblement réalisable en différents lieux (couple `latitude` et `longitude`)
   
 ## Les concepts qui incarnent la `solution`

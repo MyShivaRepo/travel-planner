@@ -7,11 +7,11 @@ Application de planification de voyages basée sur l'Inteligence Artificielle (I
 L'Utilisateur sélectionne une `Destination` (Pays, Région, Ville) et défini un nombre de `POI` (Point Of Interest) à visiter et un nombre d'`Activité` à réaliser.   
 En retour, le Système propose un `Voyage` composé de N `Jours`.   
 Chaque `Jour` comprenant :   
-- Une liste de `POI(s)` à visiter   
-- Une liste d'`Activité(s)` à réaliser   
-- Une liste de `Segment(s)` à suivre (Trajet(s) d'un point A à un point B)
+- Une liste de `POI(s)` à visiter.      
+- Une liste d'`Activité(s)` à réaliser.     
+- Une liste de `Segment(s)` à suivre (Trajet(s) d'un point A à un point B).   
 `Hôtel du matin` > `POI` et/ou `Activité` 1 > `POI` et/ou `Activité` 2 > ... > `Hôtel su soir`)
-- Un `Hôtel` du soir et un `Restaurant` pour diner  
+- Un `Hôtel` du soir et un `Restaurant` pour diner.   
 
 ## Implémentation technique
 

@@ -11,7 +11,7 @@ Chaque `Jour` comprenant :
 - Une liste d'`Activité(s)` à réaliser.     
 - Une liste de `Segment(s)` à suivre (Trajet(s) d'un point A à un point B).   
 (`Hôtel` du matin- > `POI` et/ou `Activité` 1 > `POI` et/ou `Activité` 2 > ... > `Hôtel` du soir).  
-(L'`Hôtel du matin` et l'`Hôtel du soir` étant possiblement le même)
+(L'`Hôtel` du matin et l'`Hôtel` du soir étant possiblement le même)
 - Un `Hôtel` du soir et un `Restaurant` pour diner.   
 
 ## Implémentation technique

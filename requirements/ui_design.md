@@ -232,7 +232,8 @@ La visualisation se fait dans un tableau triable avec les colonnes (Cf concept_m
     </tbody>
 </table>
 
-En bas du tableau, un `bouton` nommé `Ajouter un POI` invoque le LLM pour proposer un nouveau POI qui n'est pas déjà dans la liste existante.
+En bas du tableau, un `bouton` nommé `Ajouter un POI` invoque le LLM pour proposer un nouveau POI qui n'est pas déjà dans la liste existante.   
+Après l'ajout le Systeme renumérote les POI(s) par ordre de priorité.   
 
 ### Sous-onglet `Activités`
 La visualisation se fait dans un tableau triable avec les colonnes (Cf concept_model.md) :
@@ -264,8 +265,8 @@ La visualisation se fait dans un tableau triable avec les colonnes (Cf concept_m
     </tbody>
 </table>
 
-En bas du tableau, un `bouton` nommé `Ajouter une Activité` invoque le LLM pour proposer une nouvelle Activité qui n'est pas déjà dans la liste existante.
-
+En bas du tableau, un `bouton` nommé `Ajouter une Activité` invoque le LLM pour proposer une nouvelle Activité qui n'est pas déjà dans la liste existante.    
+Après l'ajout le Systeme renumérote les Activité(s) par ordre de priorité.   
 
 ### Sous-onglet `Carte`
 

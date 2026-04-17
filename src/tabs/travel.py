@@ -2,8 +2,6 @@ import streamlit as st
 import streamlit.components.v1 as components
 import folium
 
-import pandas as pd
-
 import database as db
 from routing import get_route, format_duration, format_distance, compute_segment_metrics
 from google_routing import get_transit_route, great_circle_route

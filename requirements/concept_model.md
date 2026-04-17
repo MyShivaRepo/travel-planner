@@ -26,7 +26,7 @@ Il est caractérisé par :
 
 Une `Destination` contient 1 ou plusieurs `POI(s)` associé(s) : relation 1-N.   
 Une `Destination` contient 1 ou plusieurs `Activité(s)` associée(s) : relation 1-N.  
-Une `Destination` a 1 unique `Voyage` associé : relation 1-1. (Simplification)   
+Une `Destination` peut en théorie avoir N `Voyages` associés (relation 1-N) ; toutefois, à ce stade du projet et par simplification, on ne gère qu'**1 seul `Voyage` par `Destination`** : la génération d'un nouveau voyage remplace le précédent.   
 
 ### POI (Point Of Interest)
 

@@ -30,7 +30,6 @@ Dans l'onglet `Destination`, sous-onglet "POIs", le Système présente les sites
 - Longitude
 
 L'Utilisateur peut :
-- Modifier manuellement un `POI` existant
 - Supprimer un `POI`
 - Ajouter un nouveau `POI` via le LLM (qui propose un `POI` supplémentaire non déjà présent dans la liste)
 - Un champ "Commentaire" permet à l'Utilisateur de préciser au Système le `POI` qu'il souhaite.
@@ -45,7 +44,6 @@ Dans l'onglet `Destination`, sous-onglet "Activités", le Système présente les
 - Fournisseur (lien hypertexte)
 
 L'Utilisateur peut :
-- Modifier manuellement une `Activité` existante
 - Supprimer une `Activité`
 - Ajouter une nouvelle `Activité` via le LLM (qui propose une `Activité` supplémentaire non déjà présent dans la liste)
 - Un champ "Commentaire" permet à l'Utilisateur de préciser au Système l'`Activité` qu'il souhaite.

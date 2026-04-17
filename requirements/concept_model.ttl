@@ -1,0 +1,385 @@
+@prefix :        <https://github.com/MyShivaRepo/travel-planner/ontology#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+# =============================================================================
+# Ontologie Travel Planner
+# Formalisation OWL 2 du modèle de concepts décrit dans concept_model.md
+# =============================================================================
+
+<https://github.com/MyShivaRepo/travel-planner/ontology>
+    a owl:Ontology ;
+    dcterms:title       "Travel Planner Ontology"@en , "Ontologie Travel Planner"@fr ;
+    dcterms:description "Formalisation OWL 2 du modèle de concepts de l'application Travel Planner : 3 concepts 'besoin' (Destination, POI, Activité) et 5 concepts 'solution' (Voyage, Jour, Segment, Hôtel, Restaurant)."@fr ;
+    owl:versionInfo     "1.0" ;
+    rdfs:seeAlso        <https://github.com/MyShivaRepo/travel-planner/blob/main/requirements/concept_model.md> .
+
+# =============================================================================
+# DATATYPES — énumérations fermées
+# =============================================================================
+
+:TypeDestination a rdfs:Datatype ;
+    rdfs:label "Type de destination"@fr ;
+    owl:equivalentClass [
+        a rdfs:Datatype ;
+        owl:oneOf ( "Pays" "Région" "Ville" )
+    ] .
+
+:ModeDeTransport a rdfs:Datatype ;
+    rdfs:label "Mode de transport"@fr ;
+    owl:equivalentClass [
+        a rdfs:Datatype ;
+        owl:oneOf (
+            "à pied" "en vélo"
+            "voiture personnelle" "voiture de location" "taxi"
+            "bus" "métro" "train" "bateau" "avion"
+        )
+    ] .
+
+# =============================================================================
+# CLASSES
+# =============================================================================
+
+# ----- Concepts qui incarnent le BESOIN ---------------------------------------
+
+:Destination a owl:Class ;
+    rdfs:label   "Destination"@fr ;
+    rdfs:comment "Lieu géographique objet d'un voyage (pays, région ou ville)."@fr .
+
+:POI a owl:Class ;
+    rdfs:label   "POI"@fr , "Point Of Interest"@en ;
+    rdfs:comment "Site touristique 'à ne pas manquer' à visiter."@fr .
+
+:Activité a owl:Class ;
+    rdfs:label   "Activité"@fr ;
+    rdfs:comment "Activité touristique caractéristique à réaliser à la destination (cours de cuisine, randonnée guidée, dégustation, etc.)."@fr .
+
+# ----- Concepts qui incarnent la SOLUTION -------------------------------------
+
+:Voyage a owl:Class ;
+    rdfs:label   "Voyage"@fr ;
+    rdfs:comment "Planification complète pour une Destination, composée d'une suite ordonnée de Jours."@fr .
+
+:Jour a owl:Class ;
+    rdfs:label   "Jour"@fr ;
+    rdfs:comment "Une journée de voyage : POIs visités, Activités réalisées, Hôtel du soir, Restaurant du soir et Segments de déplacement."@fr .
+
+:Segment a owl:Class ;
+    rdfs:label   "Segment"@fr ;
+    rdfs:comment "Trajet entre deux points de passage avec un mode de transport, une distance, une durée et un budget."@fr .
+
+:Hôtel a owl:Class ;
+    rdfs:label   "Hôtel"@fr .
+
+:Restaurant a owl:Class ;
+    rdfs:label   "Restaurant"@fr .
+
+# ----- Classe abstraite : extrémité d'un Segment ------------------------------
+# Un Segment a pour départ/arrivée un Hôtel, un POI ou une Activité — jamais un Restaurant.
+
+:PointDePassage a owl:Class ;
+    rdfs:label   "Point de passage"@fr ;
+    rdfs:comment "Classe abstraite regroupant les entités pouvant être extrémités d'un Segment : Hôtel, POI ou Activité (jamais Restaurant)."@fr ;
+    owl:equivalentClass [
+        a owl:Class ;
+        owl:unionOf ( :Hôtel :POI :Activité )
+    ] .
+
+# Hôtel, POI et Activité sont disjoints deux à deux ; Restaurant est disjoint de tous.
+[] a owl:AllDisjointClasses ;
+   owl:members ( :Destination :POI :Activité :Voyage :Jour :Segment :Hôtel :Restaurant ) .
+
+# =============================================================================
+# DATA PROPERTIES
+# =============================================================================
+
+# ----- Identifiants / libellés ------------------------------------------------
+
+:nom a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label  "nom"@fr ;
+    rdfs:domain [ owl:unionOf ( :Destination :POI :Activité :Hôtel :Restaurant ) ] ;
+    rdfs:range  xsd:string .
+
+:typeDestination a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label  "type"@fr ;
+    rdfs:domain :Destination ;
+    rdfs:range  :TypeDestination .
+
+:typePOI a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label   "type"@fr ;
+    rdfs:domain  :POI ;
+    rdfs:range   xsd:string ;
+    rdfs:comment "Catégorie libre : Nature, Architecture, Histoire, Musée, Gastronomie, etc."@fr .
+
+:typeActivité a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label   "type"@fr ;
+    rdfs:domain  :Activité ;
+    rdfs:range   xsd:string ;
+    rdfs:comment "Catégorie libre : Sport, Culture, Cuisine, Bien-être, etc."@fr .
+
+:description a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label  "description"@fr ;
+    rdfs:domain [ owl:unionOf ( :POI :Activité ) ] ;
+    rdfs:range  xsd:string .
+
+# ----- Ordre & numérotation ---------------------------------------------------
+
+:rang a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label   "rang"@fr ;
+    rdfs:domain  [ owl:unionOf ( :POI :Activité ) ] ;
+    rdfs:range   xsd:positiveInteger ;
+    rdfs:comment "Ordre de priorité (1 = plus emblématique). Toujours ≥ 1."@fr .
+
+:numéro a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label   "numéro"@fr ;
+    rdfs:domain  :Jour ;
+    rdfs:range   xsd:positiveInteger ;
+    rdfs:comment "Numéro du jour dans le voyage (1, 2, …, N)."@fr .
+
+# ----- Géolocalisation (WGS84) ------------------------------------------------
+
+:latitude a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label   "latitude"@fr ;
+    rdfs:domain  [ owl:unionOf ( :POI :Activité :Hôtel :Restaurant ) ] ;
+    rdfs:range   xsd:double ;
+    rdfs:comment "Latitude WGS84 en degrés décimaux."@fr .
+
+:longitude a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label   "longitude"@fr ;
+    rdfs:domain  [ owl:unionOf ( :POI :Activité :Hôtel :Restaurant ) ] ;
+    rdfs:range   xsd:double ;
+    rdfs:comment "Longitude WGS84 en degrés décimaux."@fr .
+
+:adresse a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label  "adresse"@fr ;
+    rdfs:domain [ owl:unionOf ( :Hôtel :Restaurant ) ] ;
+    rdfs:range  xsd:string .
+
+# ----- Activité : URL du fournisseur ------------------------------------------
+
+:fournisseur a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label   "fournisseur"@fr ;
+    rdfs:domain  :Activité ;
+    rdfs:range   xsd:anyURI ;
+    rdfs:comment "URL du site web du prestataire proposant l'activité."@fr .
+
+# ----- Métriques de Segment, Hôtel & Restaurant -------------------------------
+
+:distance a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label   "distance"@fr ;
+    rdfs:domain  :Segment ;
+    rdfs:range   xsd:decimal ;
+    rdfs:comment "Distance du segment, en kilomètres."@fr .
+
+:durée a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label   "durée"@fr ;
+    rdfs:domain  :Segment ;
+    rdfs:range   xsd:decimal ;
+    rdfs:comment "Durée du segment, en heures."@fr .
+
+:budget a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label   "budget"@fr ;
+    rdfs:domain  [ owl:unionOf ( :Segment :Hôtel :Restaurant ) ] ;
+    rdfs:range   xsd:decimal ;
+    rdfs:comment "Coût estimé en euros."@fr .
+
+:modeDeTransport a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label   "mode de transport"@fr ;
+    rdfs:domain  :Segment ;
+    rdfs:range   :ModeDeTransport ;
+    rdfs:comment "Mode de transport unique du segment."@fr .
+
+# =============================================================================
+# OBJECT PROPERTIES
+# =============================================================================
+
+# ----- Destination ↔ POI (1-N) ------------------------------------------------
+
+:contientPOI a owl:ObjectProperty ;
+    rdfs:label   "contient POI"@fr ;
+    rdfs:domain  :Destination ;
+    rdfs:range   :POI ;
+    owl:inverseOf :destinationDuPOI .
+
+:destinationDuPOI a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:label  "destination du POI"@fr ;
+    rdfs:domain :POI ;
+    rdfs:range  :Destination .
+
+# ----- Destination ↔ Activité (1-N) -------------------------------------------
+
+:contientActivité a owl:ObjectProperty ;
+    rdfs:label   "contient Activité"@fr ;
+    rdfs:domain  :Destination ;
+    rdfs:range   :Activité ;
+    owl:inverseOf :destinationDeLActivité .
+
+:destinationDeLActivité a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:label  "destination de l'Activité"@fr ;
+    rdfs:domain :Activité ;
+    rdfs:range  :Destination .
+
+# ----- Destination ↔ Voyage (théoriquement 1-N, simplifié 1-1) ----------------
+
+:aVoyage a owl:ObjectProperty ;
+    rdfs:label   "a voyage"@fr ;
+    rdfs:domain  :Destination ;
+    rdfs:range   :Voyage ;
+    owl:inverseOf :voyageDeDestination ;
+    rdfs:comment "Théoriquement 1-N. À ce stade du projet, par simplification, on ne gère qu'1 seul Voyage par Destination (la génération d'un nouveau Voyage remplace le précédent)."@fr .
+
+:voyageDeDestination a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:label  "voyage de destination"@fr ;
+    rdfs:domain :Voyage ;
+    rdfs:range  :Destination .
+
+# ----- Voyage ↔ Jour (1-N) ----------------------------------------------------
+
+:contientJour a owl:ObjectProperty ;
+    rdfs:label   "contient Jour"@fr ;
+    rdfs:domain  :Voyage ;
+    rdfs:range   :Jour ;
+    owl:inverseOf :jourDuVoyage .
+
+:jourDuVoyage a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:label  "jour du voyage"@fr ;
+    rdfs:domain :Jour ;
+    rdfs:range  :Voyage .
+
+# ----- Jour ↔ POI (0-N) -------------------------------------------------------
+
+:visite a owl:ObjectProperty ;
+    rdfs:label   "visite"@fr ;
+    rdfs:domain  :Jour ;
+    rdfs:range   :POI ;
+    rdfs:comment "POIs visités au cours de ce Jour."@fr .
+
+# ----- Jour ↔ Activité (0-N) --------------------------------------------------
+
+:réalise a owl:ObjectProperty ;
+    rdfs:label   "réalise"@fr ;
+    rdfs:domain  :Jour ;
+    rdfs:range   :Activité ;
+    rdfs:comment "Activités réalisées au cours de ce Jour."@fr .
+
+# ----- Jour ↔ Hôtel (1-1 recommandé) ------------------------------------------
+
+:séjourneÀ a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:label   "séjourne à"@fr ;
+    rdfs:domain  :Jour ;
+    rdfs:range   :Hôtel ;
+    rdfs:comment "Hôtel recommandé pour la nuit suivant ce Jour."@fr .
+
+# ----- Jour ↔ Restaurant (1-1 recommandé) -------------------------------------
+
+:dîneÀ a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:label   "dîne à"@fr ;
+    rdfs:domain  :Jour ;
+    rdfs:range   :Restaurant ;
+    rdfs:comment "Restaurant recommandé pour le dîner du soir."@fr .
+
+# ----- Jour ↔ Segment (0-N ordonné) -------------------------------------------
+
+:comporteSegment a owl:ObjectProperty ;
+    rdfs:label   "comporte Segment"@fr ;
+    rdfs:domain  :Jour ;
+    rdfs:range   :Segment ;
+    rdfs:comment "Liste ordonnée des Segments parcourus au cours de ce Jour. L'ordre est porté par le système de persistance (cf. colonne 'ordre')."@fr .
+
+# ----- Segment : départ et arrivée --------------------------------------------
+
+:départ a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:label   "départ"@fr ;
+    rdfs:domain  :Segment ;
+    rdfs:range   :PointDePassage ;
+    rdfs:comment "Point de départ du Segment (Hôtel, POI ou Activité)."@fr .
+
+:arrivée a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:label   "arrivée"@fr ;
+    rdfs:domain  :Segment ;
+    rdfs:range   :PointDePassage ;
+    rdfs:comment "Point d'arrivée du Segment (Hôtel, POI ou Activité)."@fr .
+
+# =============================================================================
+# AXIOMES DE CARDINALITÉ
+# =============================================================================
+
+# Une Destination contient au moins 1 POI et au moins 1 Activité.
+:Destination rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty     :contientPOI ;
+    owl:minCardinality "1"^^xsd:nonNegativeInteger
+] , [
+    a owl:Restriction ;
+    owl:onProperty     :contientActivité ;
+    owl:minCardinality "1"^^xsd:nonNegativeInteger
+] , [
+    # Simplification : au plus 1 Voyage par Destination.
+    a owl:Restriction ;
+    owl:onProperty     :aVoyage ;
+    owl:maxCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+# Un Voyage contient au moins 1 Jour.
+:Voyage rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty     :contientJour ;
+    owl:minCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+# Un Jour a exactement 1 numéro, 1 Hôtel et 1 Restaurant.
+:Jour rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty  :numéro ;
+    owl:cardinality "1"^^xsd:nonNegativeInteger
+] , [
+    a owl:Restriction ;
+    owl:onProperty  :séjourneÀ ;
+    owl:cardinality "1"^^xsd:nonNegativeInteger
+] , [
+    a owl:Restriction ;
+    owl:onProperty  :dîneÀ ;
+    owl:cardinality "1"^^xsd:nonNegativeInteger
+] .
+
+# Un Segment a exactement 1 départ, 1 arrivée, 1 mode de transport,
+# 1 distance, 1 durée et 1 budget.
+:Segment rdfs:subClassOf [
+    a owl:Restriction ; owl:onProperty :départ ;          owl:cardinality "1"^^xsd:nonNegativeInteger
+] , [
+    a owl:Restriction ; owl:onProperty :arrivée ;         owl:cardinality "1"^^xsd:nonNegativeInteger
+] , [
+    a owl:Restriction ; owl:onProperty :modeDeTransport ; owl:cardinality "1"^^xsd:nonNegativeInteger
+] , [
+    a owl:Restriction ; owl:onProperty :distance ;        owl:cardinality "1"^^xsd:nonNegativeInteger
+] , [
+    a owl:Restriction ; owl:onProperty :durée ;           owl:cardinality "1"^^xsd:nonNegativeInteger
+] , [
+    a owl:Restriction ; owl:onProperty :budget ;          owl:cardinality "1"^^xsd:nonNegativeInteger
+] .
+
+# Un POI a exactement 1 latitude et 1 longitude (« strictement déterminées »).
+:POI rdfs:subClassOf [
+    a owl:Restriction ; owl:onProperty :latitude ;  owl:cardinality "1"^^xsd:nonNegativeInteger
+] , [
+    a owl:Restriction ; owl:onProperty :longitude ; owl:cardinality "1"^^xsd:nonNegativeInteger
+] , [
+    a owl:Restriction ; owl:onProperty :rang ;      owl:cardinality "1"^^xsd:nonNegativeInteger
+] , [
+    a owl:Restriction ; owl:onProperty :nom ;       owl:cardinality "1"^^xsd:nonNegativeInteger
+] .
+
+# Une Activité a au moins 1 latitude/longitude (1 lieu courant ; en théorie réalisable
+# en plusieurs lieux d'après concept_model.md, mais le modèle n'en stocke qu'un).
+:Activité rdfs:subClassOf [
+    a owl:Restriction ; owl:onProperty :latitude ;  owl:minCardinality "1"^^xsd:nonNegativeInteger
+] , [
+    a owl:Restriction ; owl:onProperty :longitude ; owl:minCardinality "1"^^xsd:nonNegativeInteger
+] , [
+    a owl:Restriction ; owl:onProperty :rang ;      owl:cardinality    "1"^^xsd:nonNegativeInteger
+] , [
+    a owl:Restriction ; owl:onProperty :nom ;       owl:cardinality    "1"^^xsd:nonNegativeInteger
+] .

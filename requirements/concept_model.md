@@ -101,3 +101,81 @@ Chaque `Restaurant` est caractérisé par :
 - `adresse`
 - `coordonnées GPS` (`latitude`, `longitude`)
 - `budget`
+
+## Diagramme
+
+```mermaid
+classDiagram
+    class Destination {
+        nom : string
+        type : Pays|Région|Ville
+    }
+    class POI {
+        rang : int ≥ 1
+        nom : string
+        type : string
+        description : string
+        latitude : double
+        longitude : double
+    }
+    class Activité {
+        rang : int ≥ 1
+        nom : string
+        type : string
+        description : string
+        latitude : double
+        longitude : double
+        fournisseur : URI
+    }
+    class Voyage
+    class Jour {
+        numéro : int ≥ 1
+    }
+    class Segment {
+        modeDeTransport : enum
+        distance : km
+        durée : h
+        budget : €
+    }
+    class Hôtel {
+        nom : string
+        adresse : string
+        latitude : double
+        longitude : double
+        budget : €
+    }
+    class Restaurant {
+        nom : string
+        adresse : string
+        latitude : double
+        longitude : double
+        budget : €
+    }
+    class PointDePassage {
+        <<abstract>>
+    }
+
+    Destination "1" --> "1..*" POI : contient
+    Destination "1" --> "1..*" Activité : contient
+    Destination "1" --> "0..1" Voyage : a (simplification)
+    Voyage "1" --> "1..*" Jour : contient
+    Jour "1" --> "0..*" POI : visite
+    Jour "1" --> "0..*" Activité : réalise
+    Jour "1" --> "1" Hôtel : séjourne à
+    Jour "1" --> "1" Restaurant : dîne à
+    Jour "1" --> "0..*" Segment : comporte
+    Segment "1" --> "1" PointDePassage : départ
+    Segment "1" --> "1" PointDePassage : arrivée
+
+    PointDePassage <|-- Hôtel
+    PointDePassage <|-- POI
+    PointDePassage <|-- Activité
+```
+
+## Formalisation OWL
+
+Le modèle ci-dessus est formalisé en OWL 2 dans [`concept_model.ttl`](concept_model.ttl) (Turtle, 396 triples : 8 classes + 1 union `PointDePassage`, 15 object properties avec inverses, 15 datatype properties, axiomes de cardinalité, énumérations fermées pour `TypeDestination` et `ModeDeTransport`, disjonction des classes principales).
+
+Un jeu d'individus de validation (voyage 2 jours au Japon : Tokyo → Kyoto) est fourni dans [`concept_model.examples.ttl`](concept_model.examples.ttl).
+
+Ces fichiers sont chargeables dans Protégé, GraphDB, Apache Jena, ou tout autre outil RDF/OWL.

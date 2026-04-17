@@ -16,7 +16,9 @@ st.markdown("""
         .block-container { padding-top: 2.5rem !important; padding-bottom: 0rem !important; }
         .stTabs [data-baseweb="tab-list"] { gap: 0px; }
         .stTabs [data-baseweb="tab"] { padding: 4px 16px; }
-        /* Masquer le menu Deploy / hamburger */
+        /* Masquer le bouton « Deploy » natif de Streamlit (inutile en auto-hébergement Docker) */
+        [data-testid="stAppDeployButton"] { display: none !important; }
+        /* Masquer le menu hamburger et la décoration du header */
         [data-testid="stMainMenu"] { display: none !important; }
         header[data-testid="stHeader"] [data-testid="stDecoration"] { display: none !important; }
     </style>

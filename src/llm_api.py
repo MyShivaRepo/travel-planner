@@ -61,9 +61,16 @@ def _extract_json(text):
 # ── Validation & fallback des URLs "fournisseur" des Activités ──────────────
 
 def _search_url(activity_name, destination_name):
-    """URL de recherche Google pour une activité donnée."""
+    """URL de recherche Google pour une activité donnée.
+
+    Force les résultats en anglais :
+      - hl=en        → interface en anglais
+      - gl=us        → ranking géographique US
+      - lr=lang_en   → restreint aux pages en anglais
+    Évite que le fallback tombe sur des pages en japonais, arabe, etc.
+    """
     q = quote(f"{activity_name} {destination_name}".strip())
-    return f"{GOOGLE_SEARCH_URL_PREFIX}{q}"
+    return f"{GOOGLE_SEARCH_URL_PREFIX}{q}&hl=en&gl=us&lr=lang_en"
 
 
 def _is_url_valid(url, timeout=3):
@@ -84,17 +91,90 @@ def _is_url_valid(url, timeout=3):
         return False
 
 
-def _sanitize_activity_urls(activities, destination_name):
-    """Pour chaque activité, valide l'URL fournisseur ; remplace les URLs
-    cassées par une URL de recherche Google (détectable via le préfixe)."""
-    def _fix(act):
-        url = act.get("fournisseur_url")
-        if not _is_url_valid(url):
-            act["fournisseur_url"] = _search_url(act.get("nom", ""), destination_name)
+def _retry_broken_urls_via_llm(broken_activities, destination_name,
+                                provider, api_key, model):
+    """Re-demande au LLM des URLs alternatives pour les activités dont
+    l'URL initiale est cassée. Retourne un dict {nom_activité: nouvelle_url}.
+    Si l'appel LLM échoue, retourne un dict vide (→ fallback Google search)."""
+    if not broken_activities or not provider or not api_key:
+        return {}
+
+    names_list = "\n".join(f"- {a['nom']}" for a in broken_activities)
+    system = (
+        "Tu es un expert en voyages et tourisme. "
+        "Réponds UNIQUEMENT en JSON valide, sans texte avant ou après."
+    )
+    user_msg = (
+        f"Les URLs fournisseur que tu avais données pour les activités suivantes "
+        f"à « {destination_name} » sont INVALIDES (404, DNS introuvable, timeout) :\n"
+        f"{names_list}\n\n"
+        "Propose des URLs ALTERNATIVES vérifiables. PRIVILÉGIE impérativement les "
+        "plateformes internationales à URL stable :\n"
+        "- Viator (viator.com)\n"
+        "- GetYourGuide (getyourguide.com)\n"
+        "- TripAdvisor (tripadvisor.com)\n"
+        "- Airbnb Experiences (airbnb.com/experiences)\n"
+        "- Klook (klook.com)\n"
+        "- Booking Experiences (booking.com/attractions)\n\n"
+        "Évite les sites web individuels de petits prestataires locaux (souvent hors ligne).\n\n"
+        'Format JSON : {"urls": [{"nom": "<nom exact>", "fournisseur_url": "<url>"}, ...]}'
+    )
+
+    try:
+        fb_p, fb_k, fb_m = _get_fallback()
+        raw = _llm_call(provider, api_key, model, system, user_msg,
+                        fallback_provider=fb_p, fallback_api_key=fb_k, fallback_model=fb_m)
+        data = _extract_json(raw)
+        return {
+            item["nom"]: item.get("fournisseur_url")
+            for item in data.get("urls", [])
+            if item.get("nom") and item.get("fournisseur_url")
+        }
+    except Exception:
+        return {}
+
+
+def _sanitize_activity_urls(activities, destination_name,
+                             provider=None, api_key=None, model=None):
+    """Flux de validation en 3 passes :
+      1. Valide les URLs proposées par le LLM initialement (HEAD/GET).
+      2. Re-interroge le LLM pour les URLs cassées (prompt correctif
+         orienté plateformes stables) et re-valide les alternatives.
+      3. Les URLs toujours cassées après retry sont remplacées par une URL
+         de recherche Google (détectable via GOOGLE_SEARCH_URL_PREFIX)."""
+
+    # Passe 1 : validation initiale. On marque à None les URLs cassées.
+    def _mark_broken(act):
+        if not _is_url_valid(act.get("fournisseur_url")):
+            act["fournisseur_url"] = None
         return act
 
     with ThreadPoolExecutor(max_workers=5) as ex:
-        return list(ex.map(_fix, activities))
+        activities = list(ex.map(_mark_broken, activities))
+
+    # Passe 2 : retry via LLM pour les activités à URL None.
+    broken = [a for a in activities if a.get("fournisseur_url") is None]
+    alt_urls = _retry_broken_urls_via_llm(broken, destination_name,
+                                           provider, api_key, model)
+
+    if alt_urls:
+        # Valider en parallèle les URLs alternatives.
+        def _apply_retry(act):
+            if act.get("fournisseur_url") is None:
+                candidate = alt_urls.get(act.get("nom", ""))
+                if candidate and _is_url_valid(candidate):
+                    act["fournisseur_url"] = candidate
+            return act
+
+        with ThreadPoolExecutor(max_workers=5) as ex:
+            activities = list(ex.map(_apply_retry, activities))
+
+    # Passe 3 : fallback Google search pour les URLs toujours None.
+    for act in activities:
+        if act.get("fournisseur_url") is None:
+            act["fournisseur_url"] = _search_url(act.get("nom", ""), destination_name)
+
+    return activities
 
 
 # ── Anthropic ────────────────────────────────────────────────────────────────
@@ -293,8 +373,12 @@ def generate_activities(destination_nom, destination_type, nb_activities, provid
         f"à « {destination_nom} » ({destination_type}). "
         "Pour chaque activité fournis : rang, nom, type (Sport, Culture, Cuisine, Bien-être, etc.), "
         "description courte, latitude et longitude précises (WGS84) d'un lieu où la réaliser, "
-        "et fournisseur_url = URL complète du site web d'un prestataire réel proposant cette activité "
-        "(par exemple le site d'une école de cuisine, d'un guide, d'un organisme de visite). "
+        "et fournisseur_url = URL complète d'un prestataire proposant cette activité. "
+        "**PRIVILÉGIE impérativement les plateformes internationales à URL stable** : "
+        "Viator (viator.com), GetYourGuide (getyourguide.com), TripAdvisor (tripadvisor.com), "
+        "Airbnb Experiences (airbnb.com/experiences), Klook (klook.com), Booking Experiences "
+        "(booking.com/attractions). Évite les sites web individuels de petits prestataires "
+        "locaux dont l'URL est souvent instable ou hors ligne. "
         "Les activités doivent être DIFFÉRENTES des simples visites de sites (POI) : "
         "privilégie des expériences à faire (cours de cuisine, randonnée guidée, concert, spa, atelier, dégustation, etc.). "
         "Trie du plus emblématique au moins emblématique."
@@ -304,7 +388,7 @@ def generate_activities(destination_nom, destination_type, nb_activities, provid
                      fallback_provider=fb_p, fallback_api_key=fb_k, fallback_model=fb_m)
     data = _extract_json(raw)
     activities = data.get("activities", [])
-    return _sanitize_activity_urls(activities, destination_nom)
+    return _sanitize_activity_urls(activities, destination_nom, provider, api_key, model)
 
 
 def generate_additional_activity(destination_nom, existing_activities, commentaire=None,
@@ -328,7 +412,8 @@ def generate_additional_activity(destination_nom, existing_activities, commentai
             f"{existing_names}\n\n"
             f"Fournis : rang, nom, type (Sport, Culture, Cuisine, Bien-être, etc.), "
             f"description courte, latitude et longitude précises (WGS84) d'un lieu où la réaliser, "
-            f"et fournisseur_url = URL complète du site d'un prestataire réel proposant cette activité."
+            f"et fournisseur_url = URL d'un prestataire sur une plateforme internationale stable "
+            f"(Viator, GetYourGuide, TripAdvisor, Airbnb Experiences, Klook, Booking Experiences)."
         )
     else:
         user_msg = (
@@ -337,7 +422,8 @@ def generate_additional_activity(destination_nom, existing_activities, commentai
             "Propose UNE SEULE nouvelle activité touristique qui n'est PAS dans cette liste. "
             "Fournis : rang, nom, type (Sport, Culture, Cuisine, Bien-être, etc.), "
             "description courte, latitude et longitude précises (WGS84), et fournisseur_url "
-            "(URL complète du site web d'un prestataire réel proposant cette activité)."
+            "(URL d'un prestataire sur une plateforme internationale stable : Viator, "
+            "GetYourGuide, TripAdvisor, Airbnb Experiences, Klook, Booking Experiences)."
         )
 
     fb_p, fb_k, fb_m = _get_fallback()
@@ -345,11 +431,11 @@ def generate_additional_activity(destination_nom, existing_activities, commentai
                      fallback_provider=fb_p, fallback_api_key=fb_k, fallback_model=fb_m)
     data = _extract_json(raw)
     if "nom" in data:
-        return _sanitize_activity_urls([data], destination_nom)[0]
+        return _sanitize_activity_urls([data], destination_nom, provider, api_key, model)[0]
     activities = data.get("activities", [])
     if not activities:
         return None
-    return _sanitize_activity_urls([activities[0]], destination_nom)[0]
+    return _sanitize_activity_urls([activities[0]], destination_nom, provider, api_key, model)[0]
 
 
 def generate_additional_poi(destination_nom, existing_pois, commentaire=None,

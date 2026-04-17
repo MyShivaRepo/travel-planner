@@ -21,27 +21,27 @@ Permet de configurer un fournisseur principal de LLM (Large Language Model).
     <tbody>
         <tr>
             <td>champ</td>
-            <td>`Fournisseur`</td>
+            <td>Fournisseur</td>
             <td>permet de sélectionner un fournisseur (Anthropic/Claude, OpenAI/ChatGPT, Google/Gemini, ...).</td>
         </tr>
         <tr>
             <td>champ</td>
-            <td>`API Key`</td>
+            <td>API Key</td>
             <td>permet de saisir la clef de l'API</td>
         </tr>
         <tr>
             <td>bouton</td>
-            <td>`Tester`</td>
+            <td>Enregister</td>
             <td>permet la sauvegarde de la clef en base de données</td>
         </tr>
         <tr>
-            <td>champ</td>
-            <td>`API Key`</td>
+            <td>bouton</td>
+            <td>Tester</td>
             <td>permet de vérifier que la clef est valide</td>
         </tr>
         <tr>
             <td>zone</td>
-            <td>`Message`</td>
+            <td>Message</td>
             <td>permet de confirmer la connection ou d'afficher un message d'erreur à l'utilisateur</td>
         </tr>
     </tbody>

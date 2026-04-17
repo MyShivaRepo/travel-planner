@@ -24,6 +24,6 @@ Rq : Les modifications de l'IHM (Interface Homme-Machine) ne doivent pas impacte
 ## Stack technique
 
 **Application** : Python 3.12, Streamlit, SQLite, Folium   
+**Déploiement** : Docker   
 **APIs LLM** : Anthropic (Claude), OpenAI (ChatGPT), Google (Gemini)   
 **APIs routage** : OpenRouteService, Google Maps Directions   
-**Déploiement** : Docker

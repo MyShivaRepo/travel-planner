@@ -1,21 +1,7 @@
 # Exigences techniques
 
-## Déploiement
-
-L'application est développée dans une `image` Docker.   
-Le `container` Docker est accessible à l'adresse http://localhost:9999.   
-Les données de l'application (destinations, POI, voyages, segments, clés API) doivent être rendues pérennes via un `volume` Docker.   
-Les modifications de l'interface utilisateur ne doivent pas impacter les données de l'application.   
-
-## Configuration des API
-
-Dans l'onglet `Settings`, l'utilisateur configure au moins une clé API d'un fournisseur de LLM (Anthropic, OpenAI, Google).
-Optionnellement, il peut configurer :
-- Un LLM de secours (fallback) utilisé automatiquement en cas d'échec du LLM principal.
-- Une clé OpenRouteService pour afficher les vrais tracés routiers sur les cartes du voyage.
-- Une clé Google Maps Directions pour afficher les vrais tracés des transports publics (métro, train, bus).
-
-Toutes les clés API sont persistées en base de données afin d'être préservées entre les redémarrages du container.
+> Le déploiement (composants prérequis, container Docker) et la configuration des clés API sont décrits dans [architecture.md](architecture.md).
+> Le présent document liste les exigences techniques internes : politique de migration, fournisseurs LLM, gestion des erreurs, APIs de routage, persistance, modes de transport et conventions GPS.
 
 ## Migration de schéma de base de données
 

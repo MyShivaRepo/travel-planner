@@ -95,7 +95,7 @@ def _render_table(dest_id, dest, pois, api_key, provider):
             st.session_state["sort_key"] = "rang"
             st.session_state["sort_asc"] = True
 
-        header_cols = st.columns([h[2] for h in HEADERS] + [1.5])
+        header_cols = st.columns([h[2] for h in HEADERS] + [1])
         for i, (label, key, _) in enumerate(HEADERS):
             arrow = ""
             if st.session_state["sort_key"] == key:
@@ -117,7 +117,7 @@ def _render_table(dest_id, dest, pois, api_key, provider):
 
         for poi in sorted_pois:
             col_rang, col_nom, col_type, col_desc, col_lat, col_lon, col_actions = st.columns(
-                [0.5, 2, 1.5, 3, 1, 1, 1.5]
+                [0.5, 2, 1.5, 3, 1, 1, 1]
             )
             with col_rang:
                 st.write(str(poi["rang"]))
@@ -132,35 +132,9 @@ def _render_table(dest_id, dest, pois, api_key, provider):
             with col_lon:
                 st.write(f"{poi['longitude']:.4f}")
             with col_actions:
-                a1, a2 = st.columns(2)
-                with a1:
-                    if st.button("Modifier", key=f"edit_poi_{poi['id']}"):
-                        st.session_state[f"editing_poi_{poi['id']}"] = True
-                        st.rerun()
-                with a2:
-                    if st.button("Supprimer", key=f"del_poi_{poi['id']}"):
-                        db.delete_poi(poi["id"])
-                        st.rerun()
-
-            if st.session_state.get(f"editing_poi_{poi['id']}"):
-                with st.expander(f"Modifier « {poi['nom']} »", expanded=True):
-                    with st.form(key=f"form_edit_{poi['id']}"):
-                        e_rang = st.number_input("Rang", value=poi["rang"], min_value=1)
-                        e_nom = st.text_input("Nom", value=poi["nom"])
-                        e_type = st.text_input("Type", value=poi["type"])
-                        e_desc = st.text_area("Description", value=poi["description"] or "")
-                        e_lat = st.number_input("Latitude", value=poi["latitude"], format="%.6f")
-                        e_lon = st.number_input("Longitude", value=poi["longitude"], format="%.6f")
-                        c1, c2 = st.columns(2)
-                        with c1:
-                            if st.form_submit_button("Enregistrer"):
-                                db.update_poi(poi["id"], e_rang, e_nom, e_type, e_desc, e_lat, e_lon)
-                                st.session_state.pop(f"editing_poi_{poi['id']}", None)
-                                st.rerun()
-                        with c2:
-                            if st.form_submit_button("Annuler"):
-                                st.session_state.pop(f"editing_poi_{poi['id']}", None)
-                                st.rerun()
+                if st.button("Supprimer", key=f"del_poi_{poi['id']}"):
+                    db.delete_poi(poi["id"])
+                    st.rerun()
 
     # Champ Commentaire + bouton Ajouter (via LLM)
     st.divider()
@@ -218,7 +192,7 @@ def _render_activities(dest_id, dest, activities, api_key, provider):
             st.session_state["sort_key_act"] = "rang"
             st.session_state["sort_asc_act"] = True
 
-        header_cols = st.columns([h[2] for h in HEADERS_ACT] + [1.5])
+        header_cols = st.columns([h[2] for h in HEADERS_ACT] + [1])
         for i, (label, key, _) in enumerate(HEADERS_ACT):
             arrow = ""
             if st.session_state["sort_key_act"] == key:
@@ -241,7 +215,7 @@ def _render_activities(dest_id, dest, activities, api_key, provider):
                               reverse=not sort_asc)
 
         for act in sorted_acts:
-            cols = st.columns([h[2] for h in HEADERS_ACT] + [1.5])
+            cols = st.columns([h[2] for h in HEADERS_ACT] + [1])
             cols[0].write(str(act["rang"]))
             cols[1].write(f"**{act['nom']}**")
             cols[2].write(act["type"])
@@ -254,37 +228,9 @@ def _render_activities(dest_id, dest, activities, api_key, provider):
             else:
                 cols[6].write("—")
             with cols[7]:
-                a1, a2 = st.columns(2)
-                with a1:
-                    if st.button("Modifier", key=f"edit_act_{act['id']}"):
-                        st.session_state[f"editing_act_{act['id']}"] = True
-                        st.rerun()
-                with a2:
-                    if st.button("Supprimer", key=f"del_act_{act['id']}"):
-                        db.delete_activity(act["id"])
-                        st.rerun()
-
-            if st.session_state.get(f"editing_act_{act['id']}"):
-                with st.expander(f"Modifier « {act['nom']} »", expanded=True):
-                    with st.form(key=f"form_edit_act_{act['id']}"):
-                        e_rang = st.number_input("Rang", value=act["rang"], min_value=1)
-                        e_nom = st.text_input("Nom", value=act["nom"])
-                        e_type = st.text_input("Type", value=act["type"])
-                        e_desc = st.text_area("Description", value=act["description"] or "")
-                        e_lat = st.number_input("Latitude", value=act["latitude"], format="%.6f")
-                        e_lon = st.number_input("Longitude", value=act["longitude"], format="%.6f")
-                        e_url = st.text_input("URL fournisseur", value=act.get("fournisseur_url") or "")
-                        c1, c2 = st.columns(2)
-                        with c1:
-                            if st.form_submit_button("Enregistrer"):
-                                db.update_activity(act["id"], e_rang, e_nom, e_type, e_desc,
-                                                    e_lat, e_lon, e_url or None)
-                                st.session_state.pop(f"editing_act_{act['id']}", None)
-                                st.rerun()
-                        with c2:
-                            if st.form_submit_button("Annuler"):
-                                st.session_state.pop(f"editing_act_{act['id']}", None)
-                                st.rerun()
+                if st.button("Supprimer", key=f"del_act_{act['id']}"):
+                    db.delete_activity(act["id"])
+                    st.rerun()
 
     # ── Champ Commentaire + bouton Ajouter ─────────────────────────────────
     st.divider()

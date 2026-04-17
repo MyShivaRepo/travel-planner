@@ -198,7 +198,7 @@ Les différentes `Destinations` déjà enregistrées sont présentées dans un t
 
 Permet de visualiser l'ensemble des `POI(s)` et `Activité(s)` pour la `Destination` sélectionnée.
 En haut de l'onglet :
-- Le nom de la `Destination`, son type, le nombre de POI et le nombre d'activités
+- Le nom de la `Destination`, son type, le nombre de POI(s) et le nombre d'activité(s)
 - Un `bouton` nommé `Générer le voyage` qui lance la planification jour par jour via l'API du LLM et bascule vers l'onglet `Travel`.
 
 Cet onglet contient trois sous-onglets :
@@ -206,32 +206,63 @@ Cet onglet contient trois sous-onglets :
 ### Sous-onglet `POIs`
 
 La visualisation se fait dans un tableau triable avec les colonnes (Cf concept_model.md) :
-- Rang
-- Nom
-- Type
-- Description
-- Latitude
-- Longitude
 
-Dans la dernière colonne du tableau :
-- un `bouton` nommé `Modifier` permet de modifier les attributs de ce `POI`
-- un `bouton` nommé `Supprimer` permet de supprimer ce `POI`
+<table>
+    <thead>
+        <tr>
+            <th>champ</th>
+            <th>champ</th>
+            <th>champ</th>
+            <th>champ</th>
+            <th>champ</th>
+            <th>champ</th>
+            <th>bouton</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Rang</td>
+            <td>Nom</td>
+            <td>Type</td>
+            <td>Description</td>
+            <td>Latitude</td>
+            <td>Longitude</td>
+            <td>Supprimer</td>
+        </tr>
+    </tbody>
+</table>
 
 En bas du tableau, un `bouton` nommé `Ajouter un POI` invoque le LLM pour proposer un nouveau POI qui n'est pas déjà dans la liste existante.
 
 ### Sous-onglet `Activités`
 La visualisation se fait dans un tableau triable avec les colonnes (Cf concept_model.md) :
-- Rang
-- Nom
-- Type
-- Description
-- Latitude
-- Longitude
-- Fournisseur
 
-Dans la dernière colonne du tableau :
-- un `bouton` nommé `Modifier` permet de modifier les attributs de cette `Activité`
-- un `bouton` nommé `Supprimer` permet de supprimer cette `Activité`
+<table>
+    <thead>
+        <tr>
+            <th>champ</th>
+            <th>champ</th>
+            <th>champ</th>
+            <th>champ</th>
+            <th>champ</th>
+            <th>champ</th>
+            <th>champ</th>
+            <th>bouton</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Rang</td>
+            <td>Nom</td>
+            <td>Type</td>
+            <td>Description</td>
+            <td>Latitude</td>
+            <td>Longitude</td>
+            <td>Fournisseur</td>
+            <td>Supprimer</td>
+        </tr>
+    </tbody>
+</table>
 
 En bas du tableau, un `bouton` nommé `Ajouter une Activité` invoque le LLM pour proposer une nouvelle Activité qui n'est pas déjà dans la liste existante.
 

@@ -169,14 +169,30 @@ Permet de saisir une nouvelle `Destination` :
 
 
 Les différentes `Destinations` déjà enregistrées sont présentées dans un tableau avec les colonnes :
-- Nom
-- Type
-- Nombre de POIs
-- Nombre d'activités
 
-Dans la dernière colonne du tableau :
-- un `bouton` nommé `Visualiser` permet d'accéder à l'onglet `Destination`
-- un `bouton` nommé `Supprimer` permet de supprimer cette `Destination` (et tous ses `POI(s)` et `Activité(s)` associés)
+<table>
+    <thead>
+        <tr>
+            <th>champ</th>
+            <th>champ</th>
+            <th>champ</th>
+            <th>champ</th>
+            <th>bouton</th>
+            <th>bouton</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Nom</td>
+            <td>Type</td>
+            <td>Nb de POIS</td>
+            <td>Nb d'activité</td>
+            <td>Visualiser</td>
+            <td>Supprimer</td>
+        </tr>
+    </tbody>
+</table>
+
 
 ## Onglet `Destination`
 

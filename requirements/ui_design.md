@@ -269,11 +269,11 @@ En bas du tableau, un `bouton` nommé `Ajouter une Activité` invoque le LLM pou
 
 ### Sous-onglet `Carte`
 
-Une carte géographique affiche l'ensemble des `POI(s)` et des `Activité(s)` de la destination.
-L'échelle de la carte est adaptée automatiquement pour visualiser tous les éléments.
-Chaque `POI` est représenté par un marqueur rouge circulaire contenant son numéro de rang. Le marqueur est cliquable et affiche une popup avec le rang, le nom et le type.
-Chaque `Activité` est représenté par un marqueur orange circulaire contenant son numéro de rang. Le marqueur est cliquable et affiche une popup avec le rang, le nom et le type.
-La carte occupe toute la hauteur disponible du navigateur.
+Une carte géographique affiche l'ensemble des `POI(s)` et des `Activité(s)` de la destination.   
+L'échelle de la carte est adaptée automatiquement pour visualiser tous les éléments.   
+Chaque `POI` est représenté par un marqueur rouge circulaire contenant son numéro de rang. Le marqueur est cliquable et affiche une popup avec le rang, le nom et le type.   
+Chaque `Activité` est représenté par un marqueur orange circulaire contenant son numéro de rang. Le marqueur est cliquable et affiche une popup avec le rang, le nom et le type.   
+La carte occupe toute la hauteur disponible du navigateur.   
 
 ## Onglet `Travel`
 

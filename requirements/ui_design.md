@@ -129,11 +129,44 @@ Si la clé n'est pas fournie, la carte affiche des lignes droites pour les segme
 ## Onglet `Where to Go`
 
 Permet de saisir une nouvelle `Destination` :
-- Champ `Nom` : le nom de la destination
-- Champ `Type` : Pays, Région ou Ville (liste déroulante)
-- Curseur `Nombre de POIs` : le nombre de sites à découvrir
-- Curseur `Nombre d'activités` : le nombre d'activités à réaliser
-- Un `bouton` nommé `Rechercher` lance la génération des `POI(s)` et des `Activité(s)` via l'API du LLM
+
+<table>
+    <thead>
+        <tr>
+            <th>Type</th>
+            <th>Label</th>
+            <th>Usage</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>champ</td>
+            <td>Nom</td>
+            <td>le nom de la destination</td>
+        </tr>
+        <tr>
+            <td>liste</td>
+            <td>Type</td>
+            <td>le type de destination : Pays, Région ou Ville</td>
+        </tr>
+        <tr>
+            <td>curseur</td>
+            <td>Nb de POIs</td>
+            <td>le nombre de sites à découvrir</td>
+        </tr>
+        <tr>
+            <td>curseur</td>
+            <td>Nb d'activités</td>
+            <td>le nombre d'activités à réaliser</td>
+        </tr>
+        <tr>
+            <td>bouton</td>
+            <td>Rechercher</td>
+            <td>lance la génération des `POI(s)` et des `Activité(s)` via l'API du LLM</td>
+        </tr>
+    </tbody>
+</table>
+
 
 Les différentes `Destinations` déjà enregistrées sont présentées dans un tableau avec les colonnes :
 - Nom

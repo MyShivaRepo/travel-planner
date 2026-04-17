@@ -58,13 +58,73 @@ Champs, boutons et zone de messages identiques au LLM principal.
 
 Clé API optionnelle d'OpenRouteService pour calculer les vrais tracés routiers sur la carte du voyage pour les modes de transport compatibles (à pied, vélo, voiture, taxi, bus).
 Si la clé n'est pas fournie, la carte affiche des lignes droites entre les points.
-Boutons `Enregistrer` et `Tester`.
+
+<table>
+    <thead>
+        <tr>
+            <th>Type</th>
+            <th>Label</th>
+            <th>Usage</th>
+        </tr>
+    </thead>
+        <tr>
+            <td>champ</td>
+            <td>API Key</td>
+            <td>permet de saisir la clef de l'API</td>
+        </tr>
+        <tr>
+            <td>bouton</td>
+            <td>Enregister</td>
+            <td>permet la sauvegarde de la clef en base de données</td>
+        </tr>
+        <tr>
+            <td>bouton</td>
+            <td>Tester</td>
+            <td>permet de vérifier que la clef est valide</td>
+        </tr>
+        <tr>
+            <td>zone</td>
+            <td>Message</td>
+            <td>permet de confirmer la connection ou d'afficher un message d'erreur à l'utilisateur</td>
+        </tr>
+    </tbody>
+</table>
 
 ### API Google Maps Directions
 
 Clé API optionnelle de Google Maps Directions pour calculer les vrais tracés des transports publics (métro, train, bus) sur la carte du voyage, avec horaires et durées réels.
 Si la clé n'est pas fournie, la carte affiche des lignes droites pour les segments en métro ou en train.
-Boutons `Enregistrer` et `Tester`.
+
+<table>
+    <thead>
+        <tr>
+            <th>Type</th>
+            <th>Label</th>
+            <th>Usage</th>
+        </tr>
+    </thead>
+        <tr>
+            <td>champ</td>
+            <td>API Key</td>
+            <td>permet de saisir la clef de l'API</td>
+        </tr>
+        <tr>
+            <td>bouton</td>
+            <td>Enregister</td>
+            <td>permet la sauvegarde de la clef en base de données</td>
+        </tr>
+        <tr>
+            <td>bouton</td>
+            <td>Tester</td>
+            <td>permet de vérifier que la clef est valide</td>
+        </tr>
+        <tr>
+            <td>zone</td>
+            <td>Message</td>
+            <td>permet de confirmer la connection ou d'afficher un message d'erreur à l'utilisateur</td>
+        </tr>
+    </tbody>
+</table>
 
 ## Onglet `Where to Go`
 

@@ -223,7 +223,10 @@ def _render_activities(dest_id, dest, activities, api_key, provider):
             cols[5].write(f"{act['longitude']:.4f}")
             url = act.get("fournisseur_url") or ""
             if url:
-                cols[6].markdown(f"[lien]({url})")
+                if url.startswith("https://www.google.com/search?q="):
+                    cols[6].markdown(f"🔍 [rechercher]({url})")
+                else:
+                    cols[6].markdown(f"✓ [lien]({url})")
             else:
                 cols[6].write("—")
             with cols[7]:

@@ -1,5 +1,13 @@
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor
+from urllib.parse import quote
+
+import requests
+
+# Préfixe utilisé pour signaler qu'une URL "fournisseur" est un fallback
+# de recherche Google (URL LLM jugée invalide à la validation HTTP).
+GOOGLE_SEARCH_URL_PREFIX = "https://www.google.com/search?q="
 
 PROVIDERS = {
     "Anthropic / Claude": {
@@ -48,6 +56,45 @@ def _extract_json(text):
     if match:
         return json.loads(match.group())
     raise json.JSONDecodeError("Aucun JSON trouvé dans la réponse.", text, 0)
+
+
+# ── Validation & fallback des URLs "fournisseur" des Activités ──────────────
+
+def _search_url(activity_name, destination_name):
+    """URL de recherche Google pour une activité donnée."""
+    q = quote(f"{activity_name} {destination_name}".strip())
+    return f"{GOOGLE_SEARCH_URL_PREFIX}{q}"
+
+
+def _is_url_valid(url, timeout=3):
+    """Vérifie qu'une URL renvoie un statut HTTP OK (200-399)."""
+    if not url or url.startswith(GOOGLE_SEARCH_URL_PREFIX):
+        return False
+    try:
+        resp = requests.get(
+            url,
+            timeout=timeout,
+            allow_redirects=True,
+            stream=True,  # on ne télécharge que les headers
+            headers={"User-Agent": "Mozilla/5.0 (compatible; TravelPlanner/1.0)"},
+        )
+        resp.close()
+        return 200 <= resp.status_code < 400
+    except Exception:
+        return False
+
+
+def _sanitize_activity_urls(activities, destination_name):
+    """Pour chaque activité, valide l'URL fournisseur ; remplace les URLs
+    cassées par une URL de recherche Google (détectable via le préfixe)."""
+    def _fix(act):
+        url = act.get("fournisseur_url")
+        if not _is_url_valid(url):
+            act["fournisseur_url"] = _search_url(act.get("nom", ""), destination_name)
+        return act
+
+    with ThreadPoolExecutor(max_workers=5) as ex:
+        return list(ex.map(_fix, activities))
 
 
 # ── Anthropic ────────────────────────────────────────────────────────────────
@@ -256,7 +303,8 @@ def generate_activities(destination_nom, destination_type, nb_activities, provid
     raw = _llm_call(provider, api_key, model, system, user_msg,
                      fallback_provider=fb_p, fallback_api_key=fb_k, fallback_model=fb_m)
     data = _extract_json(raw)
-    return data.get("activities", [])
+    activities = data.get("activities", [])
+    return _sanitize_activity_urls(activities, destination_nom)
 
 
 def generate_additional_activity(destination_nom, existing_activities, commentaire=None,
@@ -297,9 +345,11 @@ def generate_additional_activity(destination_nom, existing_activities, commentai
                      fallback_provider=fb_p, fallback_api_key=fb_k, fallback_model=fb_m)
     data = _extract_json(raw)
     if "nom" in data:
-        return data
+        return _sanitize_activity_urls([data], destination_nom)[0]
     activities = data.get("activities", [])
-    return activities[0] if activities else None
+    if not activities:
+        return None
+    return _sanitize_activity_urls([activities[0]], destination_nom)[0]
 
 
 def generate_additional_poi(destination_nom, existing_pois, commentaire=None,

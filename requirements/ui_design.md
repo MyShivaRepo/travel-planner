@@ -151,12 +151,12 @@ Permet de saisir une nouvelle `Destination` :
         </tr>
         <tr>
             <td>curseur</td>
-            <td>Nb de POIs</td>
+            <td>Nb de POI(s)</td>
             <td>le nombre de sites à découvrir</td>
         </tr>
         <tr>
             <td>curseur</td>
-            <td>Nb d'activités</td>
+            <td>Nb d'activité(s)</td>
             <td>le nombre d'activités à réaliser</td>
         </tr>
         <tr>
@@ -185,8 +185,8 @@ Les différentes `Destinations` déjà enregistrées sont présentées dans un t
         <tr>
             <td>Nom</td>
             <td>Type</td>
-            <td>Nb de POIs</td>
-            <td>Nb d'activité</td>
+            <td>Nb de POI(s)</td>
+            <td>Nb d'activité(s)</td>
             <td>Visualiser</td>
             <td>Supprimer</td>
         </tr>

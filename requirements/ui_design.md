@@ -185,7 +185,7 @@ Les différentes `Destinations` déjà enregistrées sont présentées dans un t
         <tr>
             <td>Nom</td>
             <td>Type</td>
-            <td>Nb de POIS</td>
+            <td>Nb de POIs</td>
             <td>Nb d'activité</td>
             <td>Visualiser</td>
             <td>Supprimer</td>

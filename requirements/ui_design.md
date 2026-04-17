@@ -10,11 +10,43 @@ Permet de configurer les API utilisées par l'application.
 
 Permet de configurer un fournisseur principal de LLM (Large Language Model).
 
-Un champ `Fournisseur` permet de sélectionner un fournisseur (Anthropic/Claude, OpenAI/ChatGPT, Google/Gemini, ...).
-Un champ `API Key` permet de saisir la clef.
-Un bouton `Enregistrer` permet la sauvegarde de la clef en base de données.
-Un bouton `Tester` permet de vérifier que la clef est valide.
-Une zone de messages permet de confirmer la connection ou d'afficher un message d'erreur à l'utilisateur.
+<table>
+    <thead>
+        <tr>
+            <th>Type</th>
+            <th>Label</th>
+            <th>Usage</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>champ</td>
+            <td>`Fournisseur`</td>
+            <td>permet de sélectionner un fournisseur (Anthropic/Claude, OpenAI/ChatGPT, Google/Gemini, ...).</td>
+        </tr>
+        <tr>
+            <td>champ</td>
+            <td>`API Key`</td>
+            <td>permet de saisir la clef de l'API</td>
+        </tr>
+        <tr>
+            <td>bouton</td>
+            <td>`Tester`</td>
+            <td>permet la sauvegarde de la clef en base de données</td>
+        </tr>
+        <tr>
+            <td>champ</td>
+            <td>`API Key`</td>
+            <td>permet de vérifier que la clef est valide</td>
+        </tr>
+        <tr>
+            <td>zone</td>
+            <td>`Message`</td>
+            <td>permet de confirmer la connection ou d'afficher un message d'erreur à l'utilisateur</td>
+        </tr>
+    </tbody>
+</table>
+
 
 ### LLM de Secours (fallback)
 

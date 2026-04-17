@@ -176,6 +176,4 @@ classDiagram
 
 Le modèle ci-dessus est formalisé en OWL 2 dans [`concept_model.ttl`](concept_model.ttl) (Turtle, 396 triples : 8 classes + 1 union `PointDePassage`, 15 object properties avec inverses, 15 datatype properties, axiomes de cardinalité, énumérations fermées pour `TypeDestination` et `ModeDeTransport`, disjonction des classes principales).
 
-Un jeu d'individus de validation (voyage 2 jours au Japon : Tokyo → Kyoto) est fourni dans [`concept_model.examples.ttl`](concept_model.examples.ttl).
-
-Ces fichiers sont chargeables dans Protégé, GraphDB, Apache Jena, ou tout autre outil RDF/OWL.
+Le fichier est chargeable dans Protégé, GraphDB, Apache Jena, ou tout autre outil RDF/OWL.

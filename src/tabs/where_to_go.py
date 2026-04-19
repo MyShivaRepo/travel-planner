@@ -58,8 +58,10 @@ def render():
 
         dest_id = db.create_destination(nom.strip(), type_dest)
         db.bulk_create_pois(dest_id, pois)
+        db.renumber_pois(dest_id)  # garantit des rangs séquentiels 1..N
         if activities:
             db.bulk_create_activities(dest_id, activities)
+            db.renumber_activities(dest_id)
         st.success(
             f"{len(pois)} POIs et {len(activities)} activités générés pour « {nom} »."
         )

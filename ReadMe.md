@@ -30,4 +30,5 @@ Rq : Les modifications de l'IHM (Interface Homme-Machine) ne doivent pas impacte
 
 
 ## Revue de marché
-<a href="https://mindtrip.ai/">Mindtrip.ia</a>. 
+<a href="http://mindtrip.ai/">Mindtrip.ia</a>.    
+<a href="http://layla.ai/">Layla.ia</a>. 

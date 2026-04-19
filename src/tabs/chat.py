@@ -130,13 +130,19 @@ def render():
 
         status_box.update(label="✓ Terminé", state="complete", expanded=False)
 
-        # Résumé compact des tools exécutés, intégré au message persisté
+        # Résumé détaillé des tools exécutés, intégré au message persisté
+        # (les messages de succès/erreur survivent ainsi aux reruns Streamlit,
+        # contrairement au st.status qui est éphémère).
         if tool_execs:
-            summary_lines = []
+            summary_lines = ["*🔧 Actions :*"]
             for tname, _, tresult in tool_execs:
-                icon = "✓" if tresult.get("success") else "✗"
-                summary_lines.append(f"{icon} `{tname}`")
-            summary = "*🔧 Actions : " + " • ".join(summary_lines) + "*"
+                if tresult.get("success"):
+                    msg = tresult.get("message", "OK")
+                    summary_lines.append(f"- ✓ `{tname}` — {msg}")
+                else:
+                    err = tresult.get("error", "erreur inconnue")
+                    summary_lines.append(f"- ✗ `{tname}` — _{err}_")
+            summary = "\n".join(summary_lines)
             full_reply = f"{summary}\n\n{reply}"
         else:
             full_reply = reply

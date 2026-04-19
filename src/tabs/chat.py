@@ -11,25 +11,40 @@ def render():
         "apparaissent automatiquement dans les autres onglets."
     )
 
+    from chat_agent import CHAT_MODELS
+
     llm_provider = st.session_state.get("llm_provider")
     llm_api_key = st.session_state.get("api_key", "")
 
-    # Pré-requis : Anthropic uniquement dans cette V1
-    if llm_provider != "Anthropic / Claude":
+    if llm_provider not in CHAT_MODELS:
         st.warning(
-            "Le chat nécessite pour l'instant un fournisseur **Anthropic / Claude**. "
-            "Configurez-le dans l'onglet Settings."
+            f"Provider « {llm_provider} » non supporté par le chat. "
+            f"Choisissez un provider dans Settings : {', '.join(CHAT_MODELS.keys())}."
         )
         return
     if not llm_api_key:
-        st.warning("Configurez votre clé API Anthropic dans l'onglet Settings.")
+        st.warning("Configurez votre clé API dans l'onglet Settings.")
         return
 
     # ── États de session ─────────────────────────────────────────────────────
+    # Reset automatique de l'historique si le provider change (les formats
+    # natifs ne sont pas compatibles entre Anthropic / OpenAI / Google).
+    if st.session_state.get("chat_provider") and st.session_state["chat_provider"] != llm_provider:
+        st.info(
+            f"Provider changé ({st.session_state['chat_provider']} → {llm_provider}) : "
+            "historique de chat réinitialisé."
+        )
+        st.session_state["chat_history"] = []
+        st.session_state["chat_agent_messages"] = []
+    st.session_state["chat_provider"] = llm_provider
+
     if "chat_history" not in st.session_state:
         st.session_state["chat_history"] = []  # [(role, content_markdown)]
     if "chat_agent_messages" not in st.session_state:
-        st.session_state["chat_agent_messages"] = []  # historique agent (Anthropic)
+        st.session_state["chat_agent_messages"] = []  # historique agent (format provider)
+
+    # Indicateur du modèle utilisé
+    st.caption(f"Modèle : `{CHAT_MODELS[llm_provider]}`")
 
     # ── Barre d'outils : reset ───────────────────────────────────────────────
     col_title, col_reset = st.columns([6, 1])

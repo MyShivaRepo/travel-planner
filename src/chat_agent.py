@@ -1,7 +1,10 @@
 """Agent conversationnel pour l'onglet Chat.
 
-Utilise Anthropic tool_use pour traduire les intentions utilisateur en appels
-aux fonctions existantes de la base et de l'API LLM. Modèle Haiku pour
+Utilise le function-calling / tool-use des 3 providers LLM (Anthropic,
+OpenAI, Google) pour traduire les intentions utilisateur en appels aux
+fonctions existantes de la base et de l'API LLM. Chaque provider a son
+propre format de messages et de tools — le dispatch est fait dans
+`chat_turn`. Modèles légers (Haiku / gpt-4o-mini / gemini-flash) pour
 contenir les coûts de tokens.
 """
 import json
@@ -19,9 +22,12 @@ from llm_api import (
 from routing import compute_segment_metrics
 
 
-# Modèle léger utilisé pour le chat (tool-use uniquement, contenu riche géré
-# par les tools qui peuvent appeler n'importe quel provider LLM).
-CHAT_MODEL = "claude-haiku-4-5-20251001"
+# Modèles légers par provider pour le chat (tool-use uniquement).
+CHAT_MODELS = {
+    "Anthropic / Claude": "claude-haiku-4-5-20251001",
+    "OpenAI / ChatGPT": "gpt-4o-mini",
+    "Google / Gemini": "gemini-2.5-flash",
+}
 
 
 SYSTEM_PROMPT = """Tu es l'assistant conversationnel de l'application Travel Planner.
@@ -411,32 +417,78 @@ def execute_tool(name, args, llm_provider, llm_api_key):
 
 # ── Boucle d'échange ─────────────────────────────────────────────────────────
 
-def chat_turn(user_message, history_messages, llm_provider, llm_api_key, max_iterations=10):
-    """Un tour d'échange. Retourne (reply_text, new_history, tool_executions).
+# ── Adaptateurs de schéma de tools par provider ─────────────────────────────
 
-    `history_messages` est la liste des messages au format Anthropic (peut contenir
-    des blocs tool_use et tool_result). `tool_executions` est une liste
-    (name, input, result) pour affichage.
-    """
+def _tools_for_anthropic():
+    return [
+        {"name": t["name"], "description": t["description"], "input_schema": t["input_schema"]}
+        for t in TOOLS
+    ]
+
+
+def _tools_for_openai():
+    return [
+        {
+            "type": "function",
+            "function": {
+                "name": t["name"],
+                "description": t["description"],
+                "parameters": t["input_schema"],
+            },
+        }
+        for t in TOOLS
+    ]
+
+
+def _clean_schema_for_google(schema):
+    """Google genai.types.Schema accepte un sous-ensemble de JSON Schema.
+    On retire les clés non supportées (minimum, maximum, additionalProperties…)."""
+    allowed = {"type", "description", "enum", "properties", "required", "items", "format", "nullable"}
+    if not isinstance(schema, dict):
+        return schema
+    cleaned = {}
+    for k, v in schema.items():
+        if k not in allowed:
+            continue
+        if k == "properties" and isinstance(v, dict):
+            cleaned[k] = {pk: _clean_schema_for_google(pv) for pk, pv in v.items()}
+        elif k == "items" and isinstance(v, dict):
+            cleaned[k] = _clean_schema_for_google(v)
+        else:
+            cleaned[k] = v
+    return cleaned
+
+
+def _tools_for_google():
+    from google.genai import types
+    return [types.Tool(function_declarations=[
+        types.FunctionDeclaration(
+            name=t["name"],
+            description=t["description"],
+            parameters=_clean_schema_for_google(t["input_schema"]),
+        )
+        for t in TOOLS
+    ])]
+
+
+# ── Implémentation par provider ─────────────────────────────────────────────
+
+def _chat_turn_anthropic(user_message, history_messages, api_key, max_iterations):
     import anthropic
 
-    client = anthropic.Anthropic(api_key=llm_api_key, timeout=180.0)
-
+    client = anthropic.Anthropic(api_key=api_key, timeout=180.0)
     messages = list(history_messages)
     messages.append({"role": "user", "content": user_message})
-
     tool_executions = []
 
     for _ in range(max_iterations):
         response = client.messages.create(
-            model=CHAT_MODEL,
+            model=CHAT_MODELS["Anthropic / Claude"],
             max_tokens=2048,
             system=SYSTEM_PROMPT,
-            tools=TOOLS,
+            tools=_tools_for_anthropic(),
             messages=messages,
         )
-
-        # Serialize l'assistant turn dans l'historique
         messages.append({"role": "assistant", "content": response.content})
 
         if response.stop_reason != "tool_use":
@@ -445,22 +497,139 @@ def chat_turn(user_message, history_messages, llm_provider, llm_api_key, max_ite
             ).strip()
             return final_text or "(pas de réponse)", messages, tool_executions
 
-        # Exécuter les tools
         tool_results_content = []
         for block in response.content:
             if getattr(block, "type", None) == "tool_use":
-                result = execute_tool(block.name, block.input, llm_provider, llm_api_key)
+                result = execute_tool(block.name, block.input, "Anthropic / Claude", api_key)
                 tool_executions.append((block.name, block.input, result))
                 tool_results_content.append({
                     "type": "tool_result",
                     "tool_use_id": block.id,
                     "content": json.dumps(result, ensure_ascii=False),
                 })
-
         messages.append({"role": "user", "content": tool_results_content})
 
-    return (
-        "L'assistant a atteint la limite d'itérations. Reformulez votre demande.",
-        messages,
-        tool_executions,
+    return "L'assistant a atteint la limite d'itérations.", messages, tool_executions
+
+
+def _chat_turn_openai(user_message, history_messages, api_key, max_iterations):
+    from openai import OpenAI
+
+    client = OpenAI(api_key=api_key, timeout=180.0)
+    messages = list(history_messages)
+    if not messages or messages[0].get("role") != "system":
+        messages.insert(0, {"role": "system", "content": SYSTEM_PROMPT})
+    messages.append({"role": "user", "content": user_message})
+    tool_executions = []
+    tools = _tools_for_openai()
+
+    for _ in range(max_iterations):
+        response = client.chat.completions.create(
+            model=CHAT_MODELS["OpenAI / ChatGPT"],
+            max_tokens=2048,
+            messages=messages,
+            tools=tools,
+        )
+        msg = response.choices[0].message
+
+        # Sérialiser le message assistant (OpenAI attend des dicts pour l'historique)
+        assistant_entry = {"role": "assistant", "content": msg.content or ""}
+        if msg.tool_calls:
+            assistant_entry["tool_calls"] = [
+                {"id": tc.id, "type": "function",
+                 "function": {"name": tc.function.name, "arguments": tc.function.arguments}}
+                for tc in msg.tool_calls
+            ]
+        messages.append(assistant_entry)
+
+        if not msg.tool_calls:
+            return (msg.content or "").strip() or "(pas de réponse)", messages, tool_executions
+
+        for tc in msg.tool_calls:
+            try:
+                args = json.loads(tc.function.arguments or "{}")
+            except json.JSONDecodeError:
+                args = {}
+            result = execute_tool(tc.function.name, args, "OpenAI / ChatGPT", api_key)
+            tool_executions.append((tc.function.name, args, result))
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": json.dumps(result, ensure_ascii=False),
+            })
+
+    return "L'assistant a atteint la limite d'itérations.", messages, tool_executions
+
+
+def _chat_turn_google(user_message, history_messages, api_key, max_iterations):
+    from google import genai
+    from google.genai import types
+
+    client = genai.Client(api_key=api_key)
+    contents = list(history_messages)
+    contents.append(types.Content(role="user", parts=[types.Part.from_text(text=user_message)]))
+    tool_executions = []
+    config = types.GenerateContentConfig(
+        system_instruction=SYSTEM_PROMPT,
+        tools=_tools_for_google(),
     )
+
+    for _ in range(max_iterations):
+        response = client.models.generate_content(
+            model=CHAT_MODELS["Google / Gemini"],
+            contents=contents,
+            config=config,
+        )
+
+        function_calls = []
+        text_parts = []
+        model_content = None
+        if response.candidates:
+            model_content = response.candidates[0].content
+            for part in (model_content.parts or []):
+                if getattr(part, "function_call", None):
+                    function_calls.append(part.function_call)
+                elif getattr(part, "text", None):
+                    text_parts.append(part.text)
+
+        if model_content is not None:
+            contents.append(model_content)
+
+        if not function_calls:
+            final_text = "\n".join(text_parts).strip()
+            return final_text or "(pas de réponse)", contents, tool_executions
+
+        response_parts = []
+        for fc in function_calls:
+            args = dict(fc.args) if fc.args else {}
+            result = execute_tool(fc.name, args, "Google / Gemini", api_key)
+            tool_executions.append((fc.name, args, result))
+            response_parts.append(types.Part.from_function_response(
+                name=fc.name,
+                response={"result": result},
+            ))
+        contents.append(types.Content(role="user", parts=response_parts))
+
+    return "L'assistant a atteint la limite d'itérations.", contents, tool_executions
+
+
+# ── Dispatcher ──────────────────────────────────────────────────────────────
+
+_CHAT_TURN_BY_PROVIDER = {
+    "Anthropic / Claude": _chat_turn_anthropic,
+    "OpenAI / ChatGPT": _chat_turn_openai,
+    "Google / Gemini": _chat_turn_google,
+}
+
+
+def chat_turn(user_message, history_messages, llm_provider, llm_api_key, max_iterations=10):
+    """Un tour d'échange avec l'agent. Dispatche sur le provider configuré.
+
+    Retourne (reply_text, new_history, tool_executions) où `new_history` est
+    au format natif du provider courant — à ne pas mélanger entre providers
+    (l'onglet Chat réinitialise l'historique en cas de changement de provider).
+    """
+    handler = _CHAT_TURN_BY_PROVIDER.get(llm_provider)
+    if handler is None:
+        raise ValueError(f"Provider non supporté par le chat : {llm_provider}")
+    return handler(user_message, history_messages, llm_api_key, max_iterations)

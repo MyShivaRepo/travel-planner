@@ -1,7 +1,7 @@
 import streamlit as st
 
 import database as db
-from tabs import settings, where_to_go, destination, travel
+from tabs import settings, where_to_go, destination, travel, chat
 
 # ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -44,7 +44,7 @@ if "gmaps_api_key" not in st.session_state:
     st.session_state["gmaps_api_key"] = db.get_setting("gmaps_api_key") or ""
 
 # ── Navigation horizontale compacte ──────────────────────────────────────────
-PAGES = ["Settings", "Where to Go", "Destination", "Travel"]
+PAGES = ["Settings", "Where to Go", "Destination", "Travel", "💬 Chat"]
 
 if "goto_page" in st.session_state:
     st.session_state["nav_radio"] = st.session_state.pop("goto_page")
@@ -75,3 +75,5 @@ elif current == "Destination":
     destination.render()
 elif current == "Travel":
     travel.render()
+elif current == "💬 Chat":
+    chat.render()

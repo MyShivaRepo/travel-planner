@@ -27,3 +27,7 @@ Rq : Les modifications de l'IHM (Interface Homme-Machine) ne doivent pas impacte
 **Déploiement** : Docker   
 **APIs LLM** : Anthropic (Claude), OpenAI (ChatGPT), Google (Gemini)   
 **APIs routage** : OpenRouteService, Google Maps Directions   
+
+
+## Revue de marché
+<a href="https://mindtrip.ai/">Mindtrip.ia</a>. 

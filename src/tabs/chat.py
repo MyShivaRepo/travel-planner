@@ -82,23 +82,55 @@ def render():
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # Appel de l'agent
-    with st.chat_message("assistant"):
-        with st.spinner("L'assistant réfléchit…"):
-            try:
-                reply, new_messages, tool_execs = chat_turn(
-                    user_input,
-                    st.session_state["chat_agent_messages"],
-                    llm_provider,
-                    llm_api_key,
-                )
-            except Exception as e:
-                err_msg = f"❌ Erreur : {type(e).__name__} — {e}"
-                st.error(err_msg)
-                st.session_state["chat_history"].append({"role": "assistant", "content": err_msg})
-                return
+    # Appel de l'agent — st.status affiche un feedback progressif par tool
+    # (au lieu d'un spinner opaque qui peut tourner 60-90s sans retour).
+    TOOL_HINT = {
+        "list_destinations": "~ 1s",
+        "describe_destination": "~ 1s",
+        "create_destination": "~ 30-60s (génération POIs + activités)",
+        "delete_destination": "~ 1s",
+        "add_poi": "~ 10-20s",
+        "delete_poi": "~ 1s",
+        "add_activity": "~ 15-25s",
+        "delete_activity": "~ 1s",
+        "generate_travel": "~ 20-40s (génération planning jour par jour)",
+    }
 
-        # Résumé compact des tools exécutés
+    with st.chat_message("assistant"):
+        status_box = st.status("L'assistant réfléchit…", expanded=True)
+
+        def _on_progress(phase, name, args=None, result=None):
+            with status_box:
+                if phase == "start":
+                    hint = TOOL_HINT.get(name, "")
+                    suffix = f" — {hint}" if hint else ""
+                    st.write(f"🔄 `{name}`{suffix}")
+                else:
+                    if (result or {}).get("success"):
+                        msg_ok = (result or {}).get("message", "OK")
+                        st.write(f"✓ `{name}` — {msg_ok}")
+                    else:
+                        err = (result or {}).get("error", "erreur inconnue")
+                        st.write(f"✗ `{name}` — {err}")
+
+        try:
+            reply, new_messages, tool_execs = chat_turn(
+                user_input,
+                st.session_state["chat_agent_messages"],
+                llm_provider,
+                llm_api_key,
+                progress_callback=_on_progress,
+            )
+        except Exception as e:
+            status_box.update(label="❌ Erreur", state="error", expanded=True)
+            err_msg = f"❌ Erreur : {type(e).__name__} — {e}"
+            st.error(err_msg)
+            st.session_state["chat_history"].append({"role": "assistant", "content": err_msg})
+            return
+
+        status_box.update(label="✓ Terminé", state="complete", expanded=False)
+
+        # Résumé compact des tools exécutés, intégré au message persisté
         if tool_execs:
             summary_lines = []
             for tname, _, tresult in tool_execs:

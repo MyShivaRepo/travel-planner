@@ -244,8 +244,10 @@ def execute_tool(name, args, llm_provider, llm_api_key):
 
             dest_id = db.create_destination(nom, type_dest)
             db.bulk_create_pois(dest_id, pois)
+            db.renumber_pois(dest_id)  # garantit rangs séquentiels 1..N
             if acts:
                 db.bulk_create_activities(dest_id, acts)
+                db.renumber_activities(dest_id)
 
             # Pré-sélectionner la destination pour que l'onglet Destination s'ouvre dessus
             st.session_state["selected_destination_id"] = dest_id
@@ -471,9 +473,21 @@ def _tools_for_google():
     ])]
 
 
+# ── Helper : notifier la progression (callback optionnel) ───────────────────
+
+def _notify(progress_callback, phase, name, args=None, result=None):
+    """Appelle progress_callback s'il est fourni, sans propager ses éventuelles erreurs."""
+    if progress_callback is None:
+        return
+    try:
+        progress_callback(phase, name, args, result)
+    except Exception:
+        pass
+
+
 # ── Implémentation par provider ─────────────────────────────────────────────
 
-def _chat_turn_anthropic(user_message, history_messages, api_key, max_iterations):
+def _chat_turn_anthropic(user_message, history_messages, api_key, max_iterations, progress_callback=None):
     import anthropic
 
     client = anthropic.Anthropic(api_key=api_key, timeout=180.0)
@@ -500,8 +514,10 @@ def _chat_turn_anthropic(user_message, history_messages, api_key, max_iterations
         tool_results_content = []
         for block in response.content:
             if getattr(block, "type", None) == "tool_use":
+                _notify(progress_callback, "start", block.name, block.input)
                 result = execute_tool(block.name, block.input, "Anthropic / Claude", api_key)
                 tool_executions.append((block.name, block.input, result))
+                _notify(progress_callback, "end", block.name, block.input, result)
                 tool_results_content.append({
                     "type": "tool_result",
                     "tool_use_id": block.id,
@@ -512,7 +528,7 @@ def _chat_turn_anthropic(user_message, history_messages, api_key, max_iterations
     return "L'assistant a atteint la limite d'itérations.", messages, tool_executions
 
 
-def _chat_turn_openai(user_message, history_messages, api_key, max_iterations):
+def _chat_turn_openai(user_message, history_messages, api_key, max_iterations, progress_callback=None):
     from openai import OpenAI
 
     client = OpenAI(api_key=api_key, timeout=180.0)
@@ -532,7 +548,6 @@ def _chat_turn_openai(user_message, history_messages, api_key, max_iterations):
         )
         msg = response.choices[0].message
 
-        # Sérialiser le message assistant (OpenAI attend des dicts pour l'historique)
         assistant_entry = {"role": "assistant", "content": msg.content or ""}
         if msg.tool_calls:
             assistant_entry["tool_calls"] = [
@@ -550,8 +565,10 @@ def _chat_turn_openai(user_message, history_messages, api_key, max_iterations):
                 args = json.loads(tc.function.arguments or "{}")
             except json.JSONDecodeError:
                 args = {}
+            _notify(progress_callback, "start", tc.function.name, args)
             result = execute_tool(tc.function.name, args, "OpenAI / ChatGPT", api_key)
             tool_executions.append((tc.function.name, args, result))
+            _notify(progress_callback, "end", tc.function.name, args, result)
             messages.append({
                 "role": "tool",
                 "tool_call_id": tc.id,
@@ -561,7 +578,7 @@ def _chat_turn_openai(user_message, history_messages, api_key, max_iterations):
     return "L'assistant a atteint la limite d'itérations.", messages, tool_executions
 
 
-def _chat_turn_google(user_message, history_messages, api_key, max_iterations):
+def _chat_turn_google(user_message, history_messages, api_key, max_iterations, progress_callback=None):
     from google import genai
     from google.genai import types
 
@@ -602,8 +619,10 @@ def _chat_turn_google(user_message, history_messages, api_key, max_iterations):
         response_parts = []
         for fc in function_calls:
             args = dict(fc.args) if fc.args else {}
+            _notify(progress_callback, "start", fc.name, args)
             result = execute_tool(fc.name, args, "Google / Gemini", api_key)
             tool_executions.append((fc.name, args, result))
+            _notify(progress_callback, "end", fc.name, args, result)
             response_parts.append(types.Part.from_function_response(
                 name=fc.name,
                 response={"result": result},
@@ -622,14 +641,18 @@ _CHAT_TURN_BY_PROVIDER = {
 }
 
 
-def chat_turn(user_message, history_messages, llm_provider, llm_api_key, max_iterations=10):
+def chat_turn(user_message, history_messages, llm_provider, llm_api_key,
+              max_iterations=10, progress_callback=None):
     """Un tour d'échange avec l'agent. Dispatche sur le provider configuré.
 
-    Retourne (reply_text, new_history, tool_executions) où `new_history` est
-    au format natif du provider courant — à ne pas mélanger entre providers
-    (l'onglet Chat réinitialise l'historique en cas de changement de provider).
+    Args:
+        progress_callback: callable optionnel `f(phase, name, args, result)` où
+            `phase` ∈ {"start", "end"}. Appelé avant et après chaque tool pour
+            permettre à l'UI d'afficher un feedback progressif.
+
+    Retourne (reply_text, new_history, tool_executions).
     """
     handler = _CHAT_TURN_BY_PROVIDER.get(llm_provider)
     if handler is None:
         raise ValueError(f"Provider non supporté par le chat : {llm_provider}")
-    return handler(user_message, history_messages, llm_api_key, max_iterations)
+    return handler(user_message, history_messages, llm_api_key, max_iterations, progress_callback)

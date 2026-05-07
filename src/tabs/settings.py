@@ -56,14 +56,15 @@ def render():
             db.set_setting("llm_provider", provider)
             st.success(f"LLM principal enregistré : {provider}")
     with col2:
-        if st.button("Tester", key="test_primary"):
-            key = st.session_state["api_key_input"].strip()
-            if not key:
-                st.warning("Veuillez saisir une clé API.")
-            else:
-                with st.spinner("Test..."):
-                    ok, msg = test_api_key(provider, key)
-                st.success(msg) if ok else st.error(msg)
+        with st.container(key="tester_primary"):
+            if st.button("Tester", key="test_primary"):
+                key = st.session_state["api_key_input"].strip()
+                if not key:
+                    st.warning("Veuillez saisir une clé API.")
+                else:
+                    with st.spinner("Test..."):
+                        ok, msg = test_api_key(provider, key)
+                    st.success(msg) if ok else st.error(msg)
 
     # ── LLM de Secours ───────────────────────────────────────────────────────
     st.divider()
@@ -98,14 +99,15 @@ def render():
                 db.set_setting("fallback_api_key", fb_key)
                 st.success(f"LLM de secours enregistré : {fb_provider}")
         with col4:
-            if st.button("Tester", key="test_fallback"):
-                fb_key = st.session_state["fallback_key_input"].strip()
-                if not fb_key:
-                    st.warning("Veuillez saisir une clé API.")
-                else:
-                    with st.spinner("Test..."):
-                        ok, msg = test_api_key(fb_provider, fb_key)
-                    st.success(msg) if ok else st.error(msg)
+            with st.container(key="tester_fallback"):
+                if st.button("Tester", key="test_fallback"):
+                    fb_key = st.session_state["fallback_key_input"].strip()
+                    if not fb_key:
+                        st.warning("Veuillez saisir une clé API.")
+                    else:
+                        with st.spinner("Test..."):
+                            ok, msg = test_api_key(fb_provider, fb_key)
+                        st.success(msg) if ok else st.error(msg)
     else:
         # Effacer le fallback si "Aucun" est sélectionné
         if st.session_state.get("fallback_provider"):
@@ -142,20 +144,21 @@ def render():
             db.set_setting("ors_api_key", ors_key)
             st.success("Clé ORS enregistrée." if ors_key else "Clé ORS effacée.")
     with col_ors_test:
-        if st.button("Tester", key="test_ors"):
-            ors_key = st.session_state["ors_key_input"].strip()
-            if not ors_key:
-                st.warning("Veuillez saisir une clé API.")
-            else:
-                from routing import get_route
-                with st.spinner("Test de la clé ORS..."):
-                    # Petit test : route Paris → Versailles à pied
-                    test_coords = [(48.8566, 2.3522), (48.8049, 2.1204)]
-                    result = get_route(test_coords, "à pied", ors_key)
-                if result:
-                    st.success("Clé ORS valide.")
+        with st.container(key="tester_ors"):
+            if st.button("Tester", key="test_ors"):
+                ors_key = st.session_state["ors_key_input"].strip()
+                if not ors_key:
+                    st.warning("Veuillez saisir une clé API.")
                 else:
-                    st.error("Clé ORS invalide ou erreur API.")
+                    from routing import get_route
+                    with st.spinner("Test de la clé ORS..."):
+                        # Petit test : route Paris → Versailles à pied
+                        test_coords = [(48.8566, 2.3522), (48.8049, 2.1204)]
+                        result = get_route(test_coords, "à pied", ors_key)
+                    if result:
+                        st.success("Clé ORS valide.")
+                    else:
+                        st.error("Clé ORS invalide ou erreur API.")
 
     # ── API Google Maps Directions (transit : métro / train / bus) ───────────
     st.divider()
@@ -186,12 +189,13 @@ def render():
             db.set_setting("gmaps_api_key", gm_key)
             st.success("Clé Google Maps enregistrée." if gm_key else "Clé Google Maps effacée.")
     with col_gm_test:
-        if st.button("Tester", key="test_gmaps"):
-            gm_key = st.session_state["gmaps_key_input"].strip()
-            if not gm_key:
-                st.warning("Veuillez saisir une clé API.")
-            else:
-                from google_routing import test_gmaps_key
-                with st.spinner("Test de la clé Google Maps..."):
-                    ok, msg = test_gmaps_key(gm_key)
-                st.success(msg) if ok else st.error(msg)
+        with st.container(key="tester_gmaps"):
+            if st.button("Tester", key="test_gmaps"):
+                gm_key = st.session_state["gmaps_key_input"].strip()
+                if not gm_key:
+                    st.warning("Veuillez saisir une clé API.")
+                else:
+                    from google_routing import test_gmaps_key
+                    with st.spinner("Test de la clé Google Maps..."):
+                        ok, msg = test_gmaps_key(gm_key)
+                    st.success(msg) if ok else st.error(msg)

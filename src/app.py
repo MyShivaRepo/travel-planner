@@ -21,6 +21,17 @@ st.markdown("""
         /* Masquer le menu hamburger et la décoration du header */
         [data-testid="stMainMenu"] { display: none !important; }
         header[data-testid="stHeader"] [data-testid="stDecoration"] { display: none !important; }
+        /* Boutons « Tester » de l'onglet Settings : bleus (cf. ui_design.md).
+           Cible les containers st.container(key="tester_*") qui les enveloppent. */
+        [class*="st-key-tester_"] button {
+            background-color: #1f77b4 !important;
+            color: white !important;
+            border-color: #1565c0 !important;
+        }
+        [class*="st-key-tester_"] button:hover {
+            background-color: #1565c0 !important;
+            border-color: #0d47a1 !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 

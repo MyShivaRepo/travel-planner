@@ -160,7 +160,7 @@ Permet de saisir une nouvelle `Destination` :
             <td>le nombre d'activités à réaliser</td>
         </tr>
         <tr>
-            <td>bouton</td>
+            <td>bouton (rouge)</td>
             <td>Rechercher</td>
             <td>lance la génération des `POI(s)` et des `Activité(s)` via l'API du LLM</td>
         </tr>

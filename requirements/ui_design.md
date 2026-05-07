@@ -30,13 +30,13 @@ Permet de configurer un fournisseur principal de LLM (Large Language Model).
             <td>permet de saisir la clef de l'API</td>
         </tr>
         <tr>
-            <td>bouton</td>
+            <td>bouton (rouge)</td>
             <td>Enregister</td>
             <td>permet la sauvegarde de la clef en base de données</td>
         </tr>
         <tr>
             <td>bouton</td>
-            <td>Tester</td>
+            <td>Tester (bleu)</td>
             <td>permet de vérifier que la clef est valide</td>
         </tr>
         <tr>

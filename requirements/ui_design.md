@@ -73,12 +73,12 @@ Si la clé n'est pas fournie, la carte affiche des lignes droites entre les poin
             <td>permet de saisir la clef de l'API</td>
         </tr>
         <tr>
-            <td>bouton</td>
+            <td>bouton (rouge)</td>
             <td>Enregister</td>
             <td>permet la sauvegarde de la clef en base de données</td>
         </tr>
         <tr>
-            <td>bouton</td>
+            <td>bouton (bleu)</td>
             <td>Tester</td>
             <td>permet de vérifier que la clef est valide</td>
         </tr>
@@ -109,12 +109,12 @@ Si la clé n'est pas fournie, la carte affiche des lignes droites pour les segme
             <td>permet de saisir la clef de l'API</td>
         </tr>
         <tr>
-            <td>bouton</td>
+            <td>bouton (rouge)</td>
             <td>Enregister</td>
             <td>permet la sauvegarde de la clef en base de données</td>
         </tr>
         <tr>
-            <td>bouton</td>
+            <td>bouton (bleu)</td>
             <td>Tester</td>
             <td>permet de vérifier que la clef est valide</td>
         </tr>

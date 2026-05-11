@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Travel Planner — Ontologie</title>
+  <style>
+    :root {
+      --bg: #fafafa;
+      --panel: #ffffff;
+      --border: #e0e0e0;
+      --text: #222;
+      --muted: #666;
+      --besoin: #f6c453;
+      --besoin-border: #c89018;
+      --solution: #5b9bd5;
+      --solution-border: #2e5c8a;
+      --abstract: #b0b0b0;
+      --abstract-border: #707070;
+      --edge: #5a5a5a;
+      --edge-highlight: #1a73e8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      padding: 14px 22px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+    header a { color: var(--solution-border); text-decoration: none; font-size: 13px; }
+    header a:hover { text-decoration: underline; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      height: calc(100vh - 53px);
+    }
+    #graph {
+      background: var(--bg);
+      border-right: 1px solid var(--border);
+      overflow: auto;
+    }
+    #graph svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    aside {
+      padding: 16px 18px;
+      overflow-y: auto;
+      background: var(--panel);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    aside h2 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin: 16px 0 6px 0;
+    }
+    aside h2:first-child { margin-top: 0; }
+    .legend-item { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+    .swatch { width: 14px; height: 14px; border-radius: 50%; flex: 0 0 14px; border: 2px solid; }
+    .swatch.besoin   { background: var(--besoin);   border-color: var(--besoin-border); }
+    .swatch.solution { background: var(--solution); border-color: var(--solution-border); }
+    .swatch.abstract { background: var(--abstract); border-color: var(--abstract-border); }
+    .notes ul { margin: 0; padding-left: 18px; }
+    .notes li { margin: 4px 0; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; background: rgba(0,0,0,0.04); padding: 1px 4px; border-radius: 3px; }
+    #details {
+      border-top: 1px solid var(--border);
+      margin-top: 14px;
+      padding-top: 14px;
+    }
+    #details .placeholder { color: var(--muted); font-style: italic; }
+    #details h3 { margin: 0 0 8px 0; font-size: 16px; }
+    #details .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      font-size: 11px; font-weight: 600; color: white; margin-left: 6px; vertical-align: middle;
+    }
+    #details .badge.besoin   { background: var(--besoin-border); }
+    #details .badge.solution { background: var(--solution-border); }
+    #details .badge.abstract { background: var(--abstract-border); }
+    #details ul { margin: 6px 0 0 0; padding-left: 18px; }
+    #details ul li { margin: 2px 0; }
+    #details .relations { margin-top: 12px; font-size: 12px; color: var(--muted); }
+
+    /* SVG node styles */
+    .node rect { transition: filter 0.15s, transform 0.15s; cursor: pointer; }
+    .node text { pointer-events: none; user-select: none; }
+    .node:hover rect { filter: brightness(1.06) drop-shadow(0 3px 6px rgba(0,0,0,0.12)); }
+    .node.selected rect { stroke-width: 3.5; }
+
+    .edge { fill: none; stroke: var(--edge); stroke-width: 1.5; }
+    .edge.dashed { stroke-dasharray: 6 4; stroke: #888; }
+    .edge-label { font-size: 11px; fill: #444; font-family: Segoe UI, sans-serif; pointer-events: none; user-select: none; }
+    .edge-label-bg { fill: var(--bg); stroke: none; pointer-events: none; }
+    .edge.highlighted { stroke: var(--edge-highlight); stroke-width: 2.5; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🗺️ Travel Planner — Ontologie</h1>
+    <span class="subtitle">9 classes · 14 relations · OWL 2</span>
+    <a href="concept_model.ttl" target="_blank">Source TTL ↗</a>
+    <a href="concept_model.md"  target="_blank">Documentation ↗</a>
+  </header>
+
+  <div class="layout">
+    <div id="graph">
+      <svg id="svg" viewBox="0 0 900 720" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--edge)"/>
+          </marker>
+          <marker id="arrow-dashed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#888"/>
+          </marker>
+        </defs>
+        <g id="edges-layer"></g>
+        <g id="nodes-layer"></g>
+      </svg>
+    </div>
+
+    <aside>
+      <h2>Légende</h2>
+      <div class="legend-item"><div class="swatch besoin"></div><div>Concept <b>Besoin</b> — exigence du voyage</div></div>
+      <div class="legend-item"><div class="swatch solution"></div><div>Concept <b>Solution</b> — planification</div></div>
+      <div class="legend-item"><div class="swatch abstract"></div><div>Classe <b>abstraite</b> (union)</div></div>
+
+      <h2>Notes de lecture</h2>
+      <div class="notes">
+        <ul>
+          <li>Les arcs portent le nom de la relation et la cardinalité (<code>0..1</code>, <code>1</code>, <code>1..N</code>, <code>0..N</code>).</li>
+          <li>L'arc <code>Destination → Voyage</code> est <code>0..1</code> (simplification 1-1, théoriquement <code>1..N</code>).</li>
+          <li>Les arcs <strong>pointillés</strong> représentent l'héritage <code>est-un</code> vers <code>PointDePassage</code>.</li>
+          <li>Un <code>Segment</code> ne peut <strong>jamais</strong> avoir un <code>Restaurant</code> comme extrémité.</li>
+          <li>Cliquez sur un nœud pour voir ses attributs et relations.</li>
+        </ul>
+      </div>
+
+      <div id="details">
+        <p class="placeholder">Cliquez sur un nœud pour voir ses attributs et relations.</p>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    // ── Modèle de données ────────────────────────────────────────────────
+    const classes = {
+      "Destination":     { cat: "besoin",   x: 380, y:  60, attributes: [
+                              { name: "nom", type: "string" },
+                              { name: "type", type: "Pays | Région | Ville" }
+                          ]},
+      "POI":             { cat: "besoin",   x: 130, y: 220, attributes: [
+                              { name: "rang", type: "int ≥ 1" },
+                              { name: "nom", type: "string" },
+                              { name: "type", type: "string (Nature, Histoire…)" },
+                              { name: "description", type: "string" },
+                              { name: "latitude", type: "double (WGS84)" },
+                              { name: "longitude", type: "double (WGS84)" }
+                          ]},
+      "Activité":        { cat: "besoin",   x: 380, y: 220, attributes: [
+                              { name: "rang", type: "int ≥ 1" },
+                              { name: "nom", type: "string" },
+                              { name: "type", type: "string (Sport, Culture…)" },
+                              { name: "description", type: "string" },
+                              { name: "latitude", type: "double" },
+                              { name: "longitude", type: "double" },
+                              { name: "fournisseur", type: "URI" }
+                          ]},
+      "Voyage":          { cat: "solution", x: 630, y: 220, attributes: [] },
+      "Jour":            { cat: "solution", x: 630, y: 360, attributes: [
+                              { name: "numéro", type: "int ≥ 1" }
+                          ]},
+      "Hôtel":           { cat: "solution", x: 130, y: 500, attributes: [
+                              { name: "nom", type: "string" },
+                              { name: "adresse", type: "string" },
+                              { name: "latitude", type: "double" },
+                              { name: "longitude", type: "double" },
+                              { name: "budget", type: "decimal (€)" }
+                          ]},
+      "Restaurant":      { cat: "solution", x: 380, y: 500, attributes: [
+                              { name: "nom", type: "string" },
+                              { name: "adresse", type: "string" },
+                              { name: "latitude", type: "double" },
+                              { name: "longitude", type: "double" },
+                              { name: "budget", type: "decimal (€)" }
+                          ]},
+      "Segment":         { cat: "solution", x: 630, y: 500, attributes: [
+                              { name: "modeDeTransport", type: "enum (10 valeurs)" },
+                              { name: "distance", type: "decimal (km)" },
+                              { name: "durée", type: "decimal (h)" },
+                              { name: "budget", type: "decimal (€)" }
+                          ]},
+      "PointDePassage":  { cat: "abstract", x: 380, y: 640, attributes: [
+                              { name: "(union)", type: "Hôtel ⊔ POI ⊔ Activité" }
+                          ]}
+    };
+
+    // ── Relations ────────────────────────────────────────────────────────
+    const relations = [
+      { from: "Destination", to: "POI",            label: "contient",   card: "1..N" },
+      { from: "Destination", to: "Activité",       label: "contient",   card: "1..N" },
+      { from: "Destination", to: "Voyage",         label: "a",          card: "0..1", comment: "simplification 1-1 (théorique : 1..N)" },
+      { from: "Voyage",      to: "Jour",           label: "contient",   card: "1..N" },
+      { from: "Jour",        to: "POI",            label: "visite",     card: "0..N" },
+      { from: "Jour",        to: "Activité",       label: "réalise",    card: "0..N" },
+      { from: "Jour",        to: "Hôtel",          label: "séjourne à", card: "1" },
+      { from: "Jour",        to: "Restaurant",     label: "dîne à",     card: "1" },
+      { from: "Jour",        to: "Segment",        label: "comporte",   card: "0..N" },
+      { from: "Segment",     to: "PointDePassage", label: "départ",     card: "1" },
+      { from: "Segment",     to: "PointDePassage", label: "arrivée",    card: "1" },
+      { from: "Hôtel",       to: "PointDePassage", label: "est-un",     card: "",   dashed: true },
+      { from: "POI",         to: "PointDePassage", label: "est-un",     card: "",   dashed: true },
+      { from: "Activité",    to: "PointDePassage", label: "est-un",     card: "",   dashed: true }
+    ];
+
+    const NODE_W = 130, NODE_H = 46;
+    const colors = {
+      besoin:   { bg: "#f6c453", border: "#c89018" },
+      solution: { bg: "#5b9bd5", border: "#2e5c8a" },
+      abstract: { bg: "#b0b0b0", border: "#707070" }
+    };
+
+    const svgNS = "http://www.w3.org/2000/svg";
+    const nodesLayer = document.getElementById("nodes-layer");
+    const edgesLayer = document.getElementById("edges-layer");
+
+    // ── Calcul du point d'attache sur le bord d'un nœud ─────────────────
+    // Étant donné le centre (cx,cy) d'un nœud rectangulaire et un point
+    // extérieur (tx,ty), renvoie le point sur le bord du rect.
+    function edgePointOnRect(cx, cy, w, h, tx, ty) {
+      const dx = tx - cx;
+      const dy = ty - cy;
+      if (dx === 0 && dy === 0) return { x: cx, y: cy };
+      const hw = w / 2, hh = h / 2;
+      const absDx = Math.abs(dx), absDy = Math.abs(dy);
+      // Détermine si l'intersection est sur côté vertical ou horizontal
+      const t = Math.min(hw / absDx || Infinity, hh / absDy || Infinity);
+      return { x: cx + dx * t, y: cy + dy * t };
+    }
+
+    // ── Construction des arcs (avec décalage pour les paires parallèles) ─
+    // On dessine en courbe quadratique légèrement bombée pour éviter que
+    // 2 arcs entre les mêmes nœuds (départ + arrivée Segment→PointDePassage) se superposent.
+    function pairKey(a, b) { return [a, b].sort().join("→"); }
+    const pairCounts = {};
+    relations.forEach(r => {
+      const k = pairKey(r.from, r.to);
+      pairCounts[k] = (pairCounts[k] || 0) + 1;
+    });
+    const pairSeen = {};
+
+    relations.forEach((r, idx) => {
+      const a = classes[r.from];
+      const b = classes[r.to];
+      const k = pairKey(r.from, r.to);
+      const pairIdx = (pairSeen[k] = (pairSeen[k] || 0) + 1) - 1;
+      const total = pairCounts[k];
+
+      const acx = a.x, acy = a.y, bcx = b.x, bcy = b.y;
+      // Décalage perpendiculaire pour les arcs multiples (étalés en éventail)
+      const dx = bcx - acx, dy = bcy - acy;
+      const len = Math.sqrt(dx*dx + dy*dy) || 1;
+      const nx = -dy / len, ny = dx / len;  // normale unitaire
+      const offsetMag = total > 1 ? (pairIdx - (total - 1) / 2) * 22 : 0;
+
+      const start = edgePointOnRect(acx, acy, NODE_W, NODE_H, bcx + nx * offsetMag * 2, bcy + ny * offsetMag * 2);
+      const end   = edgePointOnRect(bcx, bcy, NODE_W, NODE_H, acx + nx * offsetMag * 2, acy + ny * offsetMag * 2);
+
+      // Point de contrôle (Bézier quadratique)
+      const midx = (start.x + end.x) / 2 + nx * offsetMag * 4;
+      const midy = (start.y + end.y) / 2 + ny * offsetMag * 4;
+
+      // Path
+      const path = document.createElementNS(svgNS, "path");
+      path.setAttribute("d", `M ${start.x} ${start.y} Q ${midx} ${midy} ${end.x} ${end.y}`);
+      path.setAttribute("class", r.dashed ? "edge dashed" : "edge");
+      path.setAttribute("marker-end", r.dashed ? "url(#arrow-dashed)" : "url(#arrow)");
+      path.setAttribute("data-from", r.from);
+      path.setAttribute("data-to", r.to);
+      path.setAttribute("data-idx", idx);
+      edgesLayer.appendChild(path);
+
+      // Label sur le milieu de la courbe (~ midpoint Bézier au paramètre t=0.5)
+      const t = 0.5;
+      const lx = (1 - t) * (1 - t) * start.x + 2 * (1 - t) * t * midx + t * t * end.x;
+      const ly = (1 - t) * (1 - t) * start.y + 2 * (1 - t) * t * midy + t * t * end.y;
+
+      const labelText = r.card ? `${r.label}  ${r.card}` : r.label;
+
+      // Fond du label (rectangle blanc pour lisibilité)
+      const tempText = document.createElementNS(svgNS, "text");
+      tempText.setAttribute("class", "edge-label");
+      tempText.textContent = labelText;
+      tempText.setAttribute("visibility", "hidden");
+      edgesLayer.appendChild(tempText);
+      const bbox = tempText.getBBox();
+      edgesLayer.removeChild(tempText);
+
+      const bg = document.createElementNS(svgNS, "rect");
+      bg.setAttribute("x", lx - bbox.width / 2 - 3);
+      bg.setAttribute("y", ly - bbox.height / 2);
+      bg.setAttribute("width", bbox.width + 6);
+      bg.setAttribute("height", bbox.height);
+      bg.setAttribute("class", "edge-label-bg");
+      bg.setAttribute("rx", 3);
+      edgesLayer.appendChild(bg);
+
+      const text = document.createElementNS(svgNS, "text");
+      text.setAttribute("class", "edge-label");
+      text.setAttribute("x", lx);
+      text.setAttribute("y", ly);
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("dominant-baseline", "central");
+      text.textContent = labelText;
+      edgesLayer.appendChild(text);
+    });
+
+    // ── Construction des nœuds (au-dessus des arcs) ──────────────────────
+    Object.entries(classes).forEach(([name, cls]) => {
+      const c = colors[cls.cat];
+      const g = document.createElementNS(svgNS, "g");
+      g.setAttribute("class", "node");
+      g.setAttribute("data-name", name);
+      g.setAttribute("transform", `translate(${cls.x - NODE_W / 2}, ${cls.y - NODE_H / 2})`);
+
+      const rect = document.createElementNS(svgNS, "rect");
+      rect.setAttribute("width", NODE_W);
+      rect.setAttribute("height", NODE_H);
+      rect.setAttribute("rx", cls.cat === "abstract" ? 22 : 8);
+      rect.setAttribute("fill", c.bg);
+      rect.setAttribute("stroke", c.border);
+      rect.setAttribute("stroke-width", 2);
+      if (cls.cat === "abstract") rect.setAttribute("stroke-dasharray", "6 3");
+      g.appendChild(rect);
+
+      const text = document.createElementNS(svgNS, "text");
+      text.setAttribute("x", NODE_W / 2);
+      text.setAttribute("y", NODE_H / 2);
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("dominant-baseline", "central");
+      text.setAttribute("font-family", "Segoe UI, sans-serif");
+      text.setAttribute("font-size", 14);
+      text.setAttribute("font-weight", 600);
+      text.setAttribute("fill", "#1a1a1a");
+      text.textContent = name;
+      g.appendChild(text);
+
+      g.addEventListener("click", () => selectNode(name));
+      nodesLayer.appendChild(g);
+    });
+
+    // ── Panneau de détails au clic ───────────────────────────────────────
+    const detailsEl = document.getElementById("details");
+
+    function selectNode(name) {
+      document.querySelectorAll(".node").forEach(n => n.classList.toggle("selected", n.dataset.name === name));
+      document.querySelectorAll(".edge").forEach(e => {
+        const involves = e.dataset.from === name || e.dataset.to === name;
+        e.classList.toggle("highlighted", involves);
+      });
+
+      const cls = classes[name];
+      const outR = relations.filter(r => r.from === name);
+      const inR  = relations.filter(r => r.to === name);
+
+      let html = `<h3>${name}<span class="badge ${cls.cat}">${cls.cat}</span></h3>`;
+
+      if (cls.attributes.length) {
+        html += `<div><b>Attributs</b><ul>`;
+        for (const a of cls.attributes) {
+          html += `<li><code>${a.name}</code> : <span style="color:var(--muted)">${a.type}</span></li>`;
+        }
+        html += `</ul></div>`;
+      } else {
+        html += `<div style="color:var(--muted)">Pas d'attribut datatype direct.</div>`;
+      }
+
+      if (outR.length) {
+        html += `<div class="relations"><b>Sortantes</b><ul>`;
+        for (const r of outR) {
+          const card = r.card ? ` <span style="color:#888">(${r.card})</span>` : "";
+          html += `<li><code>${r.label}</code>${card} → <b>${r.to}</b>${r.comment ? `<br><span style="font-size:10px">${r.comment}</span>` : ""}</li>`;
+        }
+        html += `</ul></div>`;
+      }
+      if (inR.length) {
+        html += `<div class="relations"><b>Entrantes</b><ul>`;
+        for (const r of inR) {
+          const card = r.card ? ` <span style="color:#888">(${r.card})</span>` : "";
+          html += `<li><b>${r.from}</b> — <code>${r.label}</code>${card}</li>`;
+        }
+        html += `</ul></div>`;
+      }
+      detailsEl.innerHTML = html;
+    }
+
+    // Sélection initiale
+    selectNode("Destination");
+  </script>
+</body>
+</html>
